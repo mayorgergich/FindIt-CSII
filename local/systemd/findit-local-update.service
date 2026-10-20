@@ -1,0 +1,9 @@
+[Unit]
+Description=Keep the local Find It build following the author's releases
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/Projects/FindIt-Local/local/update-check.sh
+Nice=10
+IOSchedulingClass=idle

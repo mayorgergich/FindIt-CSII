@@ -5,3 +5,4 @@ dist/
 tools/*/bin/
 tools/*/obj/
 ui/node_modules
+local/.state/
