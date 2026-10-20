@@ -1,5 +1,5 @@
-// Sizes are in rem: the game sets 1rem = 1/1080 of the screen height, so the screen is always
-// 1080rem tall and (16:9) 1920rem or (4:3) 1440rem wide.
+// Sizes are in rem. The game sizes rem from the screen: at 16:9 the screen is 1920 x 1080rem.
+// On other shapes don't assume which side it scales by; pxPerRem() measures it.
 
 export const DOCK_TOP = 64; // clears the top-left HUD row (Info and similar buttons)
 export const DOCK_SIDE = 12;
@@ -34,4 +34,40 @@ export function tileSize(viewStyle: string, gridWidth: number, columns: number) 
   return { width, height: viewStyle === "GridWithText" ? width + 22 : width };
 }
 
-export const pxToRem = (px: number) => (px * 1080) / window.innerHeight;
+let cachedPxPerRem = 0;
+let cachedFor = "";
+
+// Screen pixels per rem, measured from the root font size (or a probe element as a fallback).
+export function pxPerRem(): number {
+  const key = `${window.innerWidth}x${window.innerHeight}`;
+
+  if (cachedPxPerRem > 0 && cachedFor === key) {
+    return cachedPxPerRem;
+  }
+
+  let value = 0;
+
+  try {
+    value = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+  } catch {
+    value = 0;
+  }
+
+  if (!(value > 0)) {
+    const probe = document.createElement("div");
+    probe.style.position = "absolute";
+    probe.style.width = "1000rem";
+    probe.style.height = "1rem";
+    probe.style.visibility = "hidden";
+    document.body.appendChild(probe);
+    value = probe.getBoundingClientRect().width / 1000;
+    document.body.removeChild(probe);
+  }
+
+  cachedPxPerRem = value > 0 ? value : window.innerHeight / 1080;
+  cachedFor = key;
+
+  return cachedPxPerRem;
+}
+
+export const pxToRem = (px: number) => px / pxPerRem();

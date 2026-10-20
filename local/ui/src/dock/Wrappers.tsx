@@ -5,21 +5,7 @@ import { DOCK_SIDE, RAIL_WIDTH, dockWidth } from "layout";
 import { useUiState } from "store";
 import styles from "upstream/mods/WrapToolOptionsPanel/WrapToolOptionsPanel.module.scss";
 
-// The vanilla right-side menu only has to make way when the dock is on the right.
-export const DockRightMenuWrapper: ModuleRegistryExtend = (Component) => {
-  return (props) => {
-    const { children, ...otherProps } = props || {};
-    const shown = useValue(B.ShowFindItPanel$);
-    const locked = useValue(B.IsWindowLocked$);
-    const alignment = useValue(B.AlignmentStyle$);
-
-    if ((shown || locked) && alignment === "Right") {
-      return <></>;
-    }
-
-    return <Component {...otherProps}>{children}</Component>;
-  };
-};
+const RIGHT_DOCK_SIDE = 58; // matches .area.right in dock.module.scss
 
 // Keeps tool options (Line Tool, Tree Controller, Move It...) beside the dock instead of under it.
 export const DockToolOptionsWrapper: ModuleRegistryExtend = (Component) => {
@@ -36,7 +22,7 @@ export const DockToolOptionsWrapper: ModuleRegistryExtend = (Component) => {
       return <Component {...otherProps}>{children}</Component>;
     }
 
-    const offset = DOCK_SIDE + (ui.collapsed ? RAIL_WIDTH : dockWidth(rightColumn)) + 24;
+    const offset = (alignment === "Right" ? RIGHT_DOCK_SIDE : DOCK_SIDE) + (ui.collapsed ? RAIL_WIDTH : dockWidth(rightColumn)) + 24;
 
     return (
       <div

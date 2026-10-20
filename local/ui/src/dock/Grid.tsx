@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import * as B from "bindings";
 import { LocalPrefabEntry } from "types";
-import { TILE_GAP, pxToRem, tileSize } from "layout";
+import { TILE_GAP, pxPerRem, pxToRem, tileSize } from "layout";
 import { MaskIcon } from "./controls";
 import styles from "./dock.module.scss";
 import star from "images/findit_star.svg";
@@ -69,7 +69,7 @@ export const Grid = (props: GridProps) => {
   const onTrackMove = (event: any) => {
     if (drag === null || !trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
-    const usable = rect.height - (thumbHeight * window.innerHeight) / 1080;
+    const usable = rect.height - thumbHeight * pxPerRem();
     const percent = (event.clientY - rect.top - drag) / Math.max(1, usable);
     trigger(B.G, "SetScrollIndex", Math.max(0, Math.min(1, percent)) * maxScroll);
   };
@@ -77,7 +77,7 @@ export const Grid = (props: GridProps) => {
   const onTrackClick = (event: any) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
-    const thumbTopPx = rect.top + (thumbTop * window.innerHeight) / 1080;
+    const thumbTopPx = rect.top + thumbTop * pxPerRem();
     const step = Math.max(1, Math.floor(rows));
     trigger(B.G, "SetScrollIndex", event.clientY < thumbTopPx ? scrollIndex - step : scrollIndex + step);
   };

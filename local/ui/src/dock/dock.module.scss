@@ -33,8 +33,9 @@
     align-items: flex-start;
   }
 
+  // Stops short of the game's round buttons on the right edge (radio, Chirper...), which stay usable.
   &.right {
-    right: 12rem;
+    right: 58rem;
     align-items: flex-end;
   }
 }

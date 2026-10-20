@@ -7,7 +7,7 @@ import { ToolOptionsVisibility } from "upstream/mods/PickerComponent/ToolOptions
 import { CreatorPropertiesComponent } from "upstream/mods/CreatorProperties/CreatorProperties";
 import { BottomBarExtension } from "upstream/mods/CreatorProperties/CreatorPropertiesButton";
 import { Dock } from "dock/Dock";
-import { DockRightMenuWrapper, DockToolOptionsWrapper } from "dock/Wrappers";
+import { DockToolOptionsWrapper } from "dock/Wrappers";
 import { ToolbarIcons } from "dock/ToolbarIcons";
 
 const register: ModRegistrar = (moduleRegistry) => {
@@ -15,7 +15,6 @@ const register: ModRegistrar = (moduleRegistry) => {
 
   // Find It replaces the vanilla asset menu while its panel is open.
   moduleRegistry.extend("game-ui/game/components/asset-menu/asset-menu.tsx", "AssetMenu", RemoveVanillaAssetMenuComponent);
-  moduleRegistry.extend("game-ui/game/components/right-menu/right-menu.tsx", "RightMenu", DockRightMenuWrapper);
   moduleRegistry.extend("game-ui/game/components/tool-options/tool-options-panel.tsx", "ToolOptionsPanel", DockToolOptionsWrapper);
 
   // Find It and picker buttons in the top toolbar.
