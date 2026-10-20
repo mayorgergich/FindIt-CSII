@@ -210,8 +210,8 @@ export const Dock = () => {
     }
     const areaRect = areaRef.current.getBoundingClientRect();
     const rect = element.getBoundingClientRect();
-    // Keep the card below y 102 so it never covers Mod Button Manager's second row (y 56-96).
-    const minTop = Math.max(0, 102 - pxToRem(areaRect.top));
+    // Keep the card below Mod Button Manager's two-row bar (it ends at y 96-99).
+    const minTop = Math.max(0, DOCK_TOP - pxToRem(areaRect.top));
     setHover({ entry, top: Math.max(minTop, Math.min(pxToRem(rect.top - areaRect.top) - 8, pxToRem(areaRect.height) - 260)) });
   };
 
