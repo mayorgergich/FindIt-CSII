@@ -98,6 +98,111 @@ $fieldActive: #202228;
   cursor: default;
 }
 
+// As a drag handle the bar fills the header's title slot, so there's more to grab.
+.titleBarDrag {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+// ---------- floating window ----------
+// Full-screen layers set top, left, width and height explicitly: with only some sides set,
+// Gameface takes the others from the static position (Parking Lot Tool's Bar stretched that way).
+
+.floatArea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.floatFrame {
+  position: absolute;
+}
+
+// Catches the mouse for the whole screen while the window is pressed, moved or resized.
+.dragLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.snapPreview {
+  position: absolute;
+  border: 2rem solid var(--accentColorNormal);
+  border-radius: 4rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.resize {
+  position: absolute;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+// Side handles start below the title bar, which is the move handle.
+.resizeLeft {
+  left: -5rem;
+  top: 50rem;
+  bottom: 12rem;
+  width: 10rem;
+  cursor: ew-resize;
+}
+
+.resizeRight {
+  left: 100%;
+  margin-left: -5rem;
+  top: 50rem;
+  bottom: 12rem;
+  width: 10rem;
+  cursor: ew-resize;
+}
+
+.resizeBottom {
+  left: 12rem;
+  right: 12rem;
+  top: 100%;
+  margin-top: -5rem;
+  height: 10rem;
+  cursor: ns-resize;
+}
+
+.resizeCornerLeft {
+  left: -5rem;
+  top: 100%;
+  margin-top: -12rem;
+  width: 17rem;
+  height: 17rem;
+  cursor: nesw-resize;
+}
+
+.resizeCornerRight {
+  left: 100%;
+  margin-left: -12rem;
+  top: 100%;
+  margin-top: -12rem;
+  width: 17rem;
+  height: 17rem;
+  cursor: nwse-resize;
+}
+
+// Small corner mark so the resize corner can be found.
+.grip {
+  position: absolute;
+  left: 2rem;
+  top: 2rem;
+  width: 7rem;
+  height: 7rem;
+  border-right: 2rem solid rgba(255, 255, 255, 0.35);
+  border-bottom: 2rem solid rgba(255, 255, 255, 0.35);
+}
+
 .body {
   flex: 1;
   display: flex;
@@ -701,6 +806,13 @@ $fieldActive: #202228;
   width: 18rem;
   height: 18rem;
   margin-right: 8rem;
+}
+
+.menuHint {
+  max-width: 220rem;
+  margin: 2rem 7rem 6rem 7rem;
+  font-size: var(--fontSizeXS);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .menuSep {

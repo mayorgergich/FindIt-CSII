@@ -21,12 +21,18 @@ export type MenuKind = "sort" | "view" | "lot" | "levelMode" | "theme";
 
 // Native panel title bar: icon, uppercase accent title, collapse toggle, close button.
 // The game's Panel adds its own close button next to this (it calls the Panel's onClose).
-export const TitleBar = (props: { title: string; collapsed?: boolean; onToggle?: () => void }) => (
-  <div className={classNames(PanelTheme.titleBar, styles.titleBar)} onClick={props.onToggle}>
+// With onDragStart the bar is also the handle that moves the window; the dock then treats a press
+// that doesn't move as a click (fold), because its drag layer catches the mouse-up.
+export const TitleBar = (props: { title: string; collapsed?: boolean; onToggle?: () => void; onDragStart?: (event: any) => void }) => (
+  <div
+    className={classNames(PanelTheme.titleBar, styles.titleBar, props.onDragStart && styles.titleBarDrag)}
+    onClick={props.onDragStart ? undefined : props.onToggle}
+    onMouseDown={props.onDragStart}
+  >
     <img src={magnifier} className={PanelTheme.icon} />
     <div className={classNames(PanelTheme.title, PanelDefaultTheme.title)}>{props.title}</div>
     {props.onToggle && (
-      <div onClick={(e) => e.stopPropagation()}>
+      <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
         <HeaderIconBtn
           src={props.collapsed ? GLYPH.expand : GLYPH.collapse}
           className={PanelTheme.toggle}

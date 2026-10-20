@@ -22,6 +22,62 @@ export const stripGridHeight = (rowSize: number) => clamp(120 + rowSize * 3, 120
 export const PICKER_WIDTH = 820;
 export const PICKER_GRID_HEIGHT = 440;
 
+// ---------- floating window ----------
+
+export type Rect = { x: number; y: number; w: number; h: number };
+
+export const FLOAT_MIN_WIDTH = 360; // toolbar row and one column of tiles
+export const FLOAT_MIN_HEIGHT = 280;
+export const FLOAT_DEFAULT_HEIGHT = 720;
+export const TITLE_HEIGHT = 50; // the native panel header
+export const SNAP_ZONE = 24; // pointer this close to the left/right screen edge docks the window
+export const UNDOCK_DISTANCE = 12; // how far a docked title bar is dragged before it comes loose
+export const CLICK_SLOP = 3; // less movement than this is a click (folds the window)
+export const CARD_WIDTH = 330; // hover card, keep in step with .card in dock.module.scss
+
+// The game's toolbar scale (0.8 to 1.3), read the way Parking Lot Tool does.
+function toolbarScale(): number {
+  try {
+    const value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--toolbarScale"));
+    return value > 0 && value < 10 ? value : 1;
+  } catch {
+    return 1;
+  }
+}
+
+// Screen size in rem and the band kept free for the toolbar (same as .area's bottom).
+export function screenRem() {
+  const legacy = !!document.querySelector(".legacy-interface");
+  return {
+    w: pxToRem(window.innerWidth),
+    h: pxToRem(window.innerHeight),
+    bottom: legacy ? 122 : 2 * 50 * toolbarScale() + 6,
+  };
+}
+
+// Saved windows are kept per screen shape: the monitor is 1920x1080 rem, the iPad 1920x1440.
+export const screenKey = () => {
+  const s = screenRem();
+  return `${Math.round(s.w)}x${Math.round(s.h)}`;
+};
+
+// Keeps a floating window on screen, above the toolbar, and at least its minimum size.
+export function clampRect(r: Rect, collapsed: boolean): Rect {
+  const s = screenRem();
+  const maxW = Math.max(FLOAT_MIN_WIDTH, s.w);
+  const maxH = Math.max(FLOAT_MIN_HEIGHT, s.h - s.bottom);
+  const w = clamp(r.w, FLOAT_MIN_WIDTH, maxW);
+  const h = clamp(r.h, FLOAT_MIN_HEIGHT, maxH);
+  const x = clamp(r.x, 0, s.w - w);
+  const y = clamp(r.y, 0, Math.max(0, s.h - s.bottom - (collapsed ? TITLE_HEIGHT : h)));
+  return { x, y, w, h };
+}
+
+export function defaultFloatRect(width: number): Rect {
+  const s = screenRem();
+  return clampRect({ x: DOCK_SIDE, y: DOCK_TOP, w: width, h: Math.min(FLOAT_DEFAULT_HEIGHT, s.h - s.bottom - DOCK_TOP) }, false);
+}
+
 // Tile size from the measured grid width and the column count C# derived from it.
 export function tileSize(viewStyle: string, gridWidth: number, columns: number) {
   const cols = Math.max(1, columns || 1);

@@ -18,8 +18,9 @@ export const DockToolOptionsWrapper: ModuleRegistryExtend = (Component) => {
     const rightColumn = useValue(B.RightColumnSize$);
     const ui = useUiState();
 
-    // Folded to its title bar, the dock leaves the bottom corner free again.
-    if (!(shown || locked) || picker || alignment === "Center" || ui.collapsed) {
+    // Folded to its title bar, the dock leaves the bottom corner free again. A floating window
+    // is placed by the player, so tool options stay where the game puts them.
+    if (!(shown || locked) || picker || ui.floating || alignment === "Center" || ui.collapsed) {
       return <Component {...otherProps}>{children}</Component>;
     }
 

@@ -3,6 +3,8 @@ import classNames from "classnames";
 import * as B from "bindings";
 import { clickOption, findSection } from "options";
 import { DropdownTheme, GLYPH, ToolOptionsTheme } from "native";
+import { screenKey } from "layout";
+import { setUiState, useUiState } from "store";
 import { Btn, ToolBtn } from "./controls";
 import styles from "./dock.module.scss";
 
@@ -60,7 +62,14 @@ export const ViewMenu = () => {
   const alignment = findSection(options, B.Section.Alignment);
   const width = findSection(options, B.Section.Width);
   const height = findSection(options, B.Section.Height);
-  const bottom = alignment?.options.find((o) => o.id === 2)?.selected ?? false;
+  const ui = useUiState();
+  const bottom = !ui.floating && (alignment?.options.find((o) => o.id === 2)?.selected ?? false);
+
+  const resetWindow = () => {
+    const rects = { ...ui.rects };
+    delete rects[screenKey()];
+    setUiState({ rects });
+  };
 
   const stepper = (label: string, section: typeof width) =>
     section && (
@@ -86,15 +95,37 @@ export const ViewMenu = () => {
       <div className={styles.menuSep} />
       <div className={styles.menuTitle}>Dock</div>
       {alignment?.options.map((o) => (
-        <Btn key={o.id} className={item(o.selected)} onSelect={() => clickOption(B.Section.Alignment, o.id)}>
+        <Btn
+          key={o.id}
+          className={item(o.selected && !ui.floating)}
+          onSelect={() => {
+            setUiState({ floating: false });
+            clickOption(B.Section.Alignment, o.id);
+          }}
+        >
           <img src={o.icon} className={styles.menuIcon} />
           <div>{DOCK_NAMES[o.id] ?? o.name}</div>
         </Btn>
       ))}
+      <Btn className={item(ui.floating)} onSelect={() => setUiState({ floating: true })}>
+        <img src="coui://uil/Standard/ArrowsMoveAll.svg" className={styles.menuIcon} />
+        <div>Floating window</div>
+      </Btn>
       <div className={styles.menuSep} />
       <div className={styles.menuTitle}>Size</div>
-      {stepper("Width", width)}
-      {stepper("Height", height)}
+      {ui.floating ? (
+        <>
+          <div className={styles.menuHint}>Drag the window's edges or corners. Drag its title to a screen edge to dock it.</div>
+          <Btn className={item(false)} onSelect={resetWindow}>
+            <div>Reset window size and place</div>
+          </Btn>
+        </>
+      ) : (
+        <>
+          {stepper("Width", width)}
+          {stepper("Height", height)}
+        </>
+      )}
       {bottom && (
         <Btn className={item(expanded)} onSelect={() => trigger(B.G, "SetIsExpanded", !expanded)}>
           <div>{expanded ? "Expanded" : "Expand"}</div>
