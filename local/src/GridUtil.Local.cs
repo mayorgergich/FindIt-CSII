@@ -4,14 +4,15 @@ namespace FindIt.Utilities
 {
 	internal static partial class GridUtil
 	{
-		// The local UI measures its asset grid and reports the size (in UI units, 1/1080 of the
-		// screen height) through the "SetGridSize" trigger. Columns and rows then follow the real
-		// grid, whatever the dock's size, side or chrome. The same formulas live in
-		// local/ui/src/grid.ts; keep them in step.
+		// The local UI measures its asset grid and reports the size (in rem) through the
+		// "SetGridSize" trigger. Columns and rows then follow the real grid, whatever the dock's
+		// size, side or chrome. The same formulas live in local/ui/src/layout.ts (tileSize);
+		// keep them in step.
 		private static float measuredWidth;
 		private static float measuredHeight;
 
-		internal const float TileGap = 6f;
+		internal const float TileGap = 3f;
+		internal const float NameHeight = 18f;
 
 		internal static bool SetMeasuredSize(float width, float height)
 		{
@@ -28,9 +29,9 @@ namespace FindIt.Utilities
 
 		private static float MinimumTileWidth() => _findItUISystem.ViewStyle switch
 		{
-			"GridWithText" => 100f,
-			"GridNoText" => 76f,
-			"GridSmall" => 52f,
+			"GridWithText" => 96f,
+			"GridNoText" => 88f,
+			"GridSmall" => 68f,
 			_ => 0f
 		};
 
@@ -67,7 +68,7 @@ namespace FindIt.Utilities
 			var tileWidth = (measuredWidth - TileGap * (columns - 1)) / columns;
 			var tileHeight = _findItUISystem.ViewStyle switch
 			{
-				"GridWithText" => tileWidth + 22f,
+				"GridWithText" => tileWidth + NameHeight,
 				"GridNoText" => tileWidth,
 				"GridSmall" => tileWidth,
 				_ => 28f

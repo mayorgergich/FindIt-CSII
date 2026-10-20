@@ -4,7 +4,8 @@
 export const DOCK_TOP = 64; // clears the top-left HUD row (Info and similar buttons)
 export const DOCK_SIDE = 12;
 export const RAIL_WIDTH = 60;
-export const TILE_GAP = 6; // keep in step with local/src/GridUtil.Local.cs
+export const TILE_GAP = 3; // keep in step with local/src/GridUtil.Local.cs
+export const NAME_HEIGHT = 18; // name line under "tiles with names"
 export const SCROLLBAR_WIDTH = 14;
 export const GRID_PADDING = 8;
 
@@ -31,7 +32,7 @@ export function tileSize(viewStyle: string, gridWidth: number, columns: number) 
 
   const width = Math.max(20, (gridWidth - TILE_GAP * (cols - 1)) / cols);
 
-  return { width, height: viewStyle === "GridWithText" ? width + 22 : width };
+  return { width, height: viewStyle === "GridWithText" ? width + NAME_HEIGHT : width };
 }
 
 let cachedPxPerRem = 0;

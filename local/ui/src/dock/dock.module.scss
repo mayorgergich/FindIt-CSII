@@ -1,21 +1,10 @@
-// Find It dock. Coherent Gameface has no CSS grid and no flex `gap`, so spacing uses margins.
-// Colours come from the game's own CSS variables.
+// Find It dock. Visuals come from the game's own classes (panel, asset menu tabs and tiles,
+// tool options, dropdowns, toggles); this file does layout and the few pieces the game has no
+// class for, using the game's CSS variables. Coherent Gameface has no CSS grid and no flex gap.
 
-@mixin panel {
-  background-color: var(--panelColorNormal);
-  background-image: linear-gradient(var(--panelGradientStart), var(--panelGradientEnd));
-  backdrop-filter: var(--panelBlur);
-  border-radius: var(--panelRadius);
-}
-
-@mixin mask($size) {
-  width: $size;
-  height: $size;
-  background-color: currentColor;
-  mask-size: contain;
-  mask-position: 50% 50%;
-  mask-repeat: no-repeat;
-}
+$field: #0f1013; // the game's dark field colour (dropdowns, tool buttons, number fields)
+$fieldHover: #1a1c21;
+$fieldActive: #202228;
 
 // ---------- placement ----------
 
@@ -25,7 +14,7 @@
   bottom: calc(2 * var(--toolbarHeight) + 6rem);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   pointer-events: none;
 
   &.left {
@@ -33,7 +22,7 @@
     align-items: flex-start;
   }
 
-  // Stops short of the game's round buttons on the right edge (radio, Chirper...), which stay usable.
+  // Stops short of the game's round buttons on the right edge (radio, Chirper...).
   &.right {
     right: 58rem;
     align-items: flex-end;
@@ -71,98 +60,80 @@
   pointer-events: none;
 }
 
-// ---------- frame ----------
-
-.dock {
-  @include panel;
+.frame {
   position: relative;
   display: flex;
   flex-direction: column;
   pointer-events: auto;
-  color: var(--menuText1Normal);
-  box-shadow: 0 4rem 18rem rgba(0, 0, 0, 0.35);
+}
+
+.panel {
+  width: 100%;
+  box-shadow: 0 4rem 18rem rgba(0, 0, 0, 0.3);
+}
+
+.frameFull .panel {
+  height: 100%;
+}
+
+.panelContent {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.titleBar {
+  cursor: default;
 }
 
 .body {
   flex: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   position: relative;
   min-height: 0;
 }
 
-.strip .body {
-  flex-direction: column;
-}
-
-.content {
+.gridSlot {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  position: relative;
-  min-width: 0;
   min-height: 0;
 }
 
-.handle {
-  position: absolute;
-  top: 50%;
-  width: 14rem;
-  height: 60rem;
-  margin-top: -30rem;
-  background-color: var(--panelColorDark);
+.glyph {
+  background-color: currentColor;
+  mask-size: contain;
+  mask-position: 50% 50%;
+  mask-repeat: no-repeat;
+}
+
+.toolWrap,
+.btnWrap {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  color: var(--menuText2Normal);
-
-  &:hover {
-    color: var(--menuText1Normal);
-    background-color: var(--accentColorDark);
-  }
+  position: relative;
 }
 
-.left .handle {
-  right: -14rem;
-  border-radius: 0 6rem 6rem 0;
+.gapS {
+  width: 6rem;
 }
 
-.right .handle {
-  left: -14rem;
-  border-radius: 6rem 0 0 6rem;
+.hint {
+  margin: 6rem 0 2rem 0;
+  font-size: var(--fontSizeXS);
+  color: var(--textColorDim);
 }
 
-.chevron {
-  width: 8rem;
-  height: 8rem;
-  border-left: 2.5rem solid currentColor;
-  border-bottom: 2.5rem solid currentColor;
-}
+// ---------- toolbar ----------
 
-.chevronLeft {
-  transform: translateX(2rem) rotate(45deg);
-}
-
-.chevronRight {
-  transform: translateX(-2rem) rotate(-135deg);
-}
-
-// ---------- header ----------
-
-.head {
-  padding: 8rem 8rem 6rem 8rem;
-  background-color: var(--panelColorDark);
-  border-radius: var(--panelRadius) var(--panelRadius) 0 0;
-}
-
-.headRow {
+.toolbar {
   display: flex;
   flex-direction: row;
   align-items: center;
+  padding: 8rem 10rem 4rem 10rem;
 
-  & + & {
-    margin-top: 6rem;
+  .toolWrap + .toolWrap {
+    margin-left: var(--gap3);
   }
 }
 
@@ -172,15 +143,24 @@
   flex-direction: row;
   align-items: center;
   position: relative;
-  margin-right: 6rem;
+  margin-right: 8rem;
   min-width: 0;
 }
 
+.searchInput {
+  flex: 1;
+  width: auto !important;
+  padding-left: 28rem !important;
+  padding-right: 26rem !important;
+  font-size: var(--fontSizeS);
+}
+
 .searchIcon {
-  @include mask(20rem);
   position: absolute;
-  left: 8rem;
-  color: var(--menuText2Normal);
+  left: 7rem;
+  width: 16rem;
+  height: 16rem;
+  color: var(--textColorDim);
   pointer-events: none;
 }
 
@@ -197,394 +177,244 @@
   }
 }
 
-.searchInput {
-  flex: 1;
-  width: auto !important;
-  padding: 6rem 70rem 4rem 34rem !important;
-  line-height: 21rem;
-  font-size: 15rem;
-  border-width: 2rem;
-  border-radius: 5rem;
-}
-
-.count {
+.searchClear {
   position: absolute;
-  right: 6rem;
-  font-size: 11rem;
-  color: var(--menuText2Normal);
-  background-color: rgba(255, 255, 255, 0.06);
-  padding: 3rem 6rem;
+  right: 4rem;
+  width: 20rem;
+  height: 20rem;
   border-radius: 3rem;
-  pointer-events: none;
-}
-
-.clearSearch {
-  position: absolute;
-  right: 6rem;
-  width: 22rem;
-  height: 22rem;
-  border-radius: 4rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--menuText2Normal);
+  color: var(--textColorDim);
 
   &:hover {
-    color: var(--menuText1Normal);
-    background-color: rgba(200, 200, 200, 0.15);
+    background-color: var(--hoverColorNormal);
   }
 }
 
-.btn {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 30rem;
-  padding: 0 8rem;
-  margin-right: 4rem;
-  border-radius: 5rem;
-  background-color: rgba(0, 0, 0, 0.3);
-  color: var(--menuText1Normal);
-  font-size: 12rem;
-  font-weight: bold;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: rgba(200, 200, 200, 0.15);
-  }
-
-  &.on {
-    background-image: linear-gradient(var(--gradientHighlightStart), var(--gradientHighlightEnd));
-    background-color: rgba(0, 0, 0, 0);
-  }
-
-  &.disabled {
-    opacity: 0.4;
-  }
-
-  &:last-child {
-    margin-right: 0;
-  }
-}
-
-.iconBtn {
-  width: 30rem;
-  padding: 0;
-  justify-content: center;
-}
-
-.btnIcon {
-  @include mask(18rem);
-}
-
-.btn .btnIcon + .btnText {
-  margin-left: 5rem;
-}
-
-.caret {
-  width: 6rem;
-  height: 6rem;
-  margin-left: 6rem;
-  margin-top: -3rem;
-  border-right: 2rem solid currentColor;
-  border-bottom: 2rem solid currentColor;
-  transform: rotate(45deg);
-  opacity: 0.7;
+.searchClearIcon {
+  width: 12rem;
+  height: 12rem;
 }
 
 .badge {
-  margin-left: 5rem;
-  min-width: 16rem;
-  height: 16rem;
-  line-height: 16rem;
-  padding: 0 4rem;
-  border-radius: 8rem;
-  font-size: 10rem;
+  min-width: 14rem;
+  height: 14rem;
+  line-height: 14rem;
+  padding: 0 3rem;
+  font-size: var(--fontSizeXXS);
+  font-weight: bold;
   text-align: center;
-  color: #06222c;
-  background-color: var(--accentColorNormal);
+  color: #fff;
+  background-color: var(--selectedColor);
 }
 
-.spacer {
-  flex: 1;
+// ---------- category tabs ----------
+
+.tabBar {
+  padding: 6rem 10rem 0 10rem;
 }
 
-// ---------- rail ----------
-
-.rail {
-  width: 60rem;
-  padding: 6rem 4rem;
-  display: flex;
-  flex-direction: column;
-  border-right: 1rem solid rgba(255, 255, 255, 0.08);
+.tabItems {
+  overflow: hidden;
 }
 
-.collapsed .rail {
-  border-right: none;
+.tab {
+  flex: 0 1 44rem;
+  width: 44rem;
+  margin: 0 var(--gap4) 0 0;
 }
 
-.strip .rail {
-  width: auto;
-  flex-direction: row;
-  padding: 6rem 8rem 0 8rem;
-  border-right: none;
+.tabSmall {
+  flex: 0 0 auto;
+  width: 38rem;
+  height: 30rem;
+  margin: 0 var(--gap4) var(--gap4) 0;
 }
 
-.railBtn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 6rem 0 5rem 0;
-  margin-bottom: 2rem;
-  border-radius: 5rem;
-  color: var(--menuText2Normal);
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: var(--menuText1Normal);
-  }
-
-  &.on {
-    background-image: linear-gradient(var(--gradientHighlightStart), var(--gradientHighlightEnd));
-    color: var(--menuText1Normal);
-  }
-}
-
-.strip .railBtn {
-  flex-direction: row;
-  padding: 5rem 8rem;
-  margin: 0 4rem 0 0;
-}
-
-.railIcon {
-  width: 24rem;
+.tabIcon {
   height: 24rem;
 }
 
-.railLabel {
-  margin-top: 3rem;
-  font-size: 9.5rem;
-  font-weight: bold;
-  text-align: center;
-  white-space: nowrap;
+.tabSmall .tabIcon {
+  height: 20rem;
 }
 
-.strip .railLabel {
-  margin: 0 0 0 6rem;
-  font-size: 11rem;
+.tabSpacer {
+  flex: 1;
 }
 
-.railSep {
-  height: 1rem;
-  margin: 6rem 4rem;
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.strip .railSep {
-  width: 1rem;
-  height: auto;
-  margin: 4rem 6rem;
-}
-
-// ---------- chips ----------
-
-.chips {
+.subTabBar {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  padding: 8rem 8rem 4rem 8rem;
+  padding: 6rem 10rem 2rem 10rem;
 }
 
-.chip {
+// ---------- location line ----------
+
+.location {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 0 4rem 4rem 0;
-  padding: 5rem 9rem;
-  border-radius: 14rem;
-  border: 1rem solid rgba(255, 255, 255, 0.15);
-  background-color: rgba(255, 255, 255, 0.04);
-  font-size: 11.5rem;
+  padding: 8rem 12rem 0 12rem;
+}
+
+.locationTitle {
+  flex: 1;
+  font-size: var(--fontSizeS);
   font-weight: bold;
+  text-transform: uppercase;
+  color: var(--accentColorNormal);
   white-space: nowrap;
-  color: var(--menuText1Normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.locationSub {
+  color: var(--accentColorLight);
+}
+
+.locationCount {
+  font-size: var(--fontSizeXS);
+  color: var(--textColorDim);
+  white-space: nowrap;
+  margin-left: 8rem;
+}
+
+// ---------- pills (saved tags, bulk tag suggestions) ----------
+
+.pills {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 6rem 10rem 2rem 10rem;
+}
+
+.pill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 0 var(--gap4) var(--gap4) 0;
+  padding: 4rem 8rem;
+  border-radius: 3rem;
+  background-color: $field;
+  color: var(--textColorDim);
+  font-size: var(--fontSizeXS);
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: $fieldHover;
   }
 
-  &.on {
-    background-image: linear-gradient(var(--gradientHighlightStart), var(--gradientHighlightEnd));
-    border-color: rgba(0, 0, 0, 0);
+  &:active {
+    background-color: $fieldActive;
   }
 }
 
-.chipIcon {
-  width: 14rem;
-  height: 14rem;
-  margin-right: 5rem;
+.pillOn,
+.pillOn:hover {
+  background-color: var(--selectedColor);
+  color: #fff;
 }
 
-.chipCount {
-  margin-left: 5rem;
-  opacity: 0.6;
-  font-weight: normal;
-}
-
-.chipX {
+.pillCount {
   margin-left: 6rem;
-  font-weight: bold;
-  opacity: 0.8;
+  opacity: 0.6;
 }
+
+// ---------- building bar (tool-options rows) ----------
+
+.bar {
+  padding: 4rem 0 2rem 0;
+}
+
+.numberField {
+  min-width: 46rem;
+}
+
+.dropToggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 110rem;
+}
+
+.dropToggleSet {
+  color: #fff;
+  background-color: var(--selectedColorDark);
+}
+
+.dropLabel {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.dropIndicator {
+  width: 12rem;
+  height: 12rem;
+}
+
+// ---------- active filters ----------
 
 .active {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  padding: 6rem 8rem 2rem 8rem;
-  background-color: rgba(82, 190, 228, 0.06);
-  border-bottom: 1rem solid rgba(255, 255, 255, 0.08);
+  padding: 4rem 10rem 2rem 10rem;
+}
 
-  .chip {
-    border-color: rgba(72, 140, 211, 0.6);
-    background-color: rgba(72, 140, 211, 0.25);
+.activeItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 0 var(--gap4) var(--gap4) 0;
+  padding: 3rem 6rem 3rem 8rem;
+  border-radius: 3rem;
+  background-color: var(--selectedColorDark);
+  color: #fff;
+  font-size: var(--fontSizeXS);
+
+  &:hover {
+    background-color: var(--selectedColor-hover);
   }
 }
 
+.activeX {
+  width: 10rem;
+  height: 10rem;
+  margin-left: 6rem;
+  opacity: 0.8;
+}
+
 .linkBtn {
-  margin: 0 0 4rem auto;
-  padding: 5rem 4rem;
-  font-size: 11.5rem;
+  margin: 0 0 var(--gap4) 8rem;
+  padding: 3rem 4rem;
+  font-size: var(--fontSizeXS);
   font-weight: bold;
   color: var(--accentColorNormal);
 
   &:hover {
-    color: var(--menuText1Normal);
+    color: var(--accentColorNormal-hover);
   }
 }
 
+.selectBar,
 .notice {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 8rem 8rem 0 8rem;
-  padding: 6rem 8rem;
-  border-radius: 5rem;
-  font-size: 11.5rem;
-  background-color: rgba(233, 166, 64, 0.18);
-  color: var(--menuText1Normal);
-
-  span {
-    flex: 1;
-  }
+  margin: 4rem 10rem 0 10rem;
+  padding: 4rem 8rem;
+  border-radius: 3rem;
+  background-color: var(--panelColorDark);
+  font-size: var(--fontSizeXS);
 }
 
-// ---------- building bar ----------
-
-.bar {
-  padding: 2rem 8rem 8rem 8rem;
-  border-bottom: 1rem solid rgba(255, 255, 255, 0.08);
-}
-
-.barRow {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  & + & {
-    margin-top: 6rem;
-  }
-}
-
-.barLabel {
-  width: 54rem;
-  font-size: 10rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  color: var(--menuText2Normal);
-}
-
-.seg {
+.selectText {
   flex: 1;
-  display: flex;
-  flex-direction: row;
-  padding: 2rem;
-  border-radius: 5rem;
-  background-color: rgba(0, 0, 0, 0.3);
-}
-
-.segBtn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6rem 0;
-  margin-right: 2rem;
-  border-radius: 4rem;
-  font-size: 11.5rem;
-  font-weight: bold;
-  white-space: nowrap;
-  color: var(--menuText1Normal);
-
-  &:last-child {
-    margin-right: 0;
-  }
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-
-  &.on {
-    background-image: linear-gradient(var(--gradientHighlightStart), var(--gradientHighlightEnd));
-  }
-
-  &.disabled {
-    opacity: 0.35;
-  }
-}
-
-.pick {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 28rem;
-  padding: 0 8rem;
-  margin-right: 6rem;
-  border-radius: 5rem;
-  background-color: rgba(0, 0, 0, 0.3);
-  font-size: 11.5rem;
-  font-weight: bold;
-  color: var(--menuText1Normal);
-  min-width: 0;
-
-  &:last-child {
-    margin-right: 0;
-  }
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-
-  &.set {
-    background-color: rgba(72, 140, 211, 0.35);
-    border: 1rem solid var(--accentColorNormal);
-  }
-}
-
-.pickLabel {
-  font-size: 9.5rem;
-  text-transform: uppercase;
-  color: var(--menuText2Normal);
-  margin-right: 6rem;
-}
-
-.pickValue {
-  flex: 1;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  color: var(--textColorDim);
 }
 
 // ---------- grid ----------
@@ -595,164 +425,85 @@
   flex-direction: row;
   min-height: 0;
   position: relative;
-  background-color: rgba(53, 63, 67, 0.35);
 }
 
 .grid {
   flex: 1;
   position: relative;
   overflow: hidden;
-  margin: 8rem 0 8rem 8rem;
+  margin: 8rem 0 8rem 10rem;
 }
 
 .empty {
   position: absolute;
-  left: 12rem;
-  right: 12rem;
-  top: 24rem;
+  left: 8rem;
+  right: 8rem;
+  top: 20rem;
   text-align: center;
-  font-size: 12.5rem;
-  color: var(--menuText2Normal);
+  font-size: var(--fontSizeS);
+  color: var(--textColorDim);
 }
 
 .tile {
   position: absolute;
-  border-radius: 5rem;
-  background-color: rgba(74, 88, 88, 0.85);
-  overflow: hidden;
-  color: var(--menuTitleNormal);
-
-  &:hover {
-    background-color: rgba(92, 110, 110, 0.95);
-  }
-
-  &.selected {
-    background-color: var(--accentColorDark-focused);
-    border: 2rem solid var(--accentColorNormal);
-  }
-
-  &.tagSelected {
-    border: 2rem solid #f0b14a;
-  }
+  margin: 0 !important;
 }
 
-.thumbBox {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.tileSelected {
+  box-shadow: 0 0 0 2rem var(--accentColorNormal);
+}
+
+.tagSelected {
+  box-shadow: 0 0 0 2rem #f0b14a;
 }
 
 .thumb {
-  width: 92%;
-  height: 92%;
+  flex: none;
 }
 
-.tileName {
+.badge18 {
+  width: 18rem;
+  height: 18rem;
+}
+
+.favBadge {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 22rem;
-  line-height: 22rem;
-  padding: 0 6rem;
-  font-size: 11rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-  text-shadow: 0 0 4rem rgb(0, 0, 0);
-}
-
-.GridNoText .tileName {
-  height: auto;
-  line-height: 14rem;
-  padding: 4rem 6rem;
-  white-space: normal;
-  background-color: rgba(0, 0, 0, 0.6);
-  opacity: 0;
-}
-
-.GridNoText .tile:hover .tileName {
-  opacity: 1;
-}
-
-.GridSmall .tileName {
-  display: none;
-}
-
-.ListSimple {
-  .tile {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .thumbBox {
-    position: relative;
-    width: 28rem;
-    height: 28rem;
-  }
-
-  .tileName {
-    position: relative;
-    flex: 1;
-    height: 28rem;
-    line-height: 28rem;
-    text-align: left;
-    font-size: 12rem;
-  }
-}
-
-.badgeFav {
-  @include mask(16rem);
-  position: absolute;
-  left: 4rem;
-  top: 4rem;
+  left: 3rem;
+  top: 3rem;
+  width: 15rem;
+  height: 15rem;
   color: #ffd65a;
 }
 
-.badgeHot {
+.hotBadge {
   position: absolute;
-  right: 4rem;
-  top: 4rem;
-  width: 16rem;
-  height: 16rem;
+  left: 3rem;
+  bottom: 3rem;
+  width: 15rem;
+  height: 15rem;
   border-radius: 8rem;
-  background-color: #d9533e;
-  color: #ffffff;
-  font-size: 11rem;
+  background-color: var(--negativeColor);
+  color: #fff;
+  font-size: var(--fontSizeXXS);
   font-weight: bold;
-  line-height: 16rem;
+  line-height: 15rem;
   text-align: center;
 }
 
-.badgeRandom {
-  @include mask(14rem);
+.randomBadge {
   position: absolute;
-  right: 4rem;
-  bottom: 26rem;
-  color: var(--menuText1Normal);
+  right: 3rem;
+  bottom: 3rem;
+  width: 13rem;
+  height: 13rem;
+  color: #fff;
   opacity: 0.8;
-}
-
-.ListSimple .badgeFav,
-.ListSimple .badgeHot,
-.ListSimple .badgeRandom {
-  position: relative;
-  left: auto;
-  right: auto;
-  top: auto;
-  bottom: auto;
-  margin-right: 6rem;
 }
 
 .acts {
   position: absolute;
-  right: 3rem;
-  top: 3rem;
+  right: 2rem;
+  bottom: 2rem;
   display: flex;
   flex-direction: row;
   opacity: 0;
@@ -762,59 +513,108 @@
   opacity: 1;
 }
 
-.ListSimple .acts {
-  position: relative;
-  right: auto;
-  top: auto;
-  margin-right: 4rem;
-}
-
 .act {
-  width: 22rem;
-  height: 22rem;
-  margin-left: 3rem;
-  border-radius: 4rem;
+  width: 20rem;
+  height: 20rem;
+  margin-left: var(--gap3);
+  border-radius: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(10, 14, 18, 0.8);
-  color: #ffffff;
+  background-color: $field;
+  color: #fff;
 
   &:hover {
-    background-color: var(--accentColorDark);
+    background-color: $fieldHover;
   }
+}
 
-  &.on {
-    color: #ffd65a;
-  }
+.actOn {
+  color: #ffd65a;
 }
 
 .actIcon {
-  @include mask(14rem);
+  width: 13rem;
+  height: 13rem;
 }
 
-.scrollTrack {
-  width: 10rem;
-  margin: 8rem 3rem;
-  position: relative;
+.tileName {
+  position: absolute;
+  height: 18rem;
+  line-height: 18rem;
+  padding: 0 2rem;
+  font-size: var(--fontSizeXS);
+  color: var(--textColorDim);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// List view: a row per asset.
+.listItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 6rem;
   border-radius: 3rem;
-  background-color: rgba(var(--scrollbarColor), 0.15);
 
   &:hover {
-    background-color: rgba(var(--scrollbarColor), 0.25);
+    background-color: var(--hoverColorNormal);
   }
+
+  .acts {
+    position: relative;
+    right: auto;
+    bottom: auto;
+  }
+
+  .favBadge,
+  .hotBadge,
+  .randomBadge {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    margin-left: 4rem;
+  }
+}
+
+.listItem.tileSelected {
+  background-color: var(--selectedColor);
+  box-shadow: none;
+}
+
+.listName {
+  flex: 1;
+  margin-left: 8rem;
+  font-size: var(--fontSizeS);
+  color: var(--menuText1Normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// The game's new-style scrollbar: highlight gradient thumb.
+.scrollTrack {
+  width: 8rem;
+  margin: 8rem 4rem 8rem 6rem;
+  position: relative;
+  border-radius: 4rem;
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 .scrollThumb {
   position: absolute;
   left: 0;
   width: 100%;
-  border-radius: 3rem;
-  background-color: rgba(var(--scrollbarColor), 0.6);
+  border-radius: 4rem;
+  background-image: linear-gradient(var(--gradientHighlightStart), var(--gradientHighlightEnd));
+}
 
-  &:hover {
-    background-color: rgba(var(--scrollbarColor), 0.85);
-  }
+.scrollTrackEmpty {
+  width: 18rem;
 }
 
 .scrollBlocker {
@@ -826,317 +626,124 @@
   pointer-events: auto;
 }
 
-.selectBar {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 6rem 8rem;
-  background-color: rgba(240, 177, 74, 0.16);
-  border-bottom: 1rem solid rgba(255, 255, 255, 0.08);
-  font-size: 12rem;
+// ---------- hover card (asset detail panel classes) ----------
 
-  span {
-    flex: 1;
-  }
-}
-
-// ---------- drawers ----------
-
-.drawer {
+.card {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 60rem;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--panelColorDark);
-  border-left: 1rem solid rgba(255, 255, 255, 0.08);
+  width: 330rem;
+  pointer-events: none;
+  box-shadow: 0 6rem 20rem rgba(0, 0, 0, 0.35);
 }
 
-.strip .drawer {
-  left: 0;
-}
-
-.drawerHead {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 10rem 10rem 8rem 12rem;
-  border-bottom: 1rem solid rgba(255, 255, 255, 0.08);
-}
-
-.drawerTitle {
+.cardTitle {
   flex: 1;
-  font-size: 12rem;
+}
+
+.cardDim {
+  color: var(--textColorDim);
+}
+
+.cardWarn {
+  margin-bottom: 4rem;
+  font-size: var(--fontSizeS);
+  color: var(--negativeColor);
+}
+
+.cardTags {
+  font-size: var(--fontSizeXS);
+  color: var(--accentColorLight);
+}
+
+// ---------- popover menus (in-game dropdown classes) ----------
+
+.menu {
+  position: absolute;
+  z-index: 10;
+  min-width: 220rem;
+  padding: 4rem;
+  pointer-events: auto;
+  box-shadow: 0 8rem 24rem rgba(0, 0, 0, 0.45);
+}
+
+.menuTitle {
+  margin: 4rem 7rem 4rem 7rem;
+  font-size: var(--fontSizeXS);
   font-weight: bold;
   text-transform: uppercase;
   color: var(--accentColorNormal);
 }
 
-.drawerSub {
-  padding: 8rem 12rem 0 12rem;
-  font-size: 13rem;
-  font-weight: bold;
-}
-
-.drawerBody {
-  flex: 1;
-  min-height: 0;
-}
-
-.drawerBodyInner {
-  padding: 2rem 12rem 12rem 12rem;
-}
-
-.drawerFoot {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  padding: 8rem 10rem;
-  border-top: 1rem solid rgba(255, 255, 255, 0.08);
-}
-
-.group {
-  padding: 10rem 0;
-  border-bottom: 1rem solid rgba(255, 255, 255, 0.08);
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.groupTitle {
-  margin-bottom: 8rem;
-  font-size: 10rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  color: var(--menuText2Normal);
-}
-
-.fieldLabel {
-  margin: 8rem 0 4rem 0;
-  font-size: 11.5rem;
-  color: var(--menuText2Normal);
-}
-
-.switch {
+.menuItem {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 4rem 0;
-
-  &:hover .switchText {
-    color: var(--menuText1Normal);
-  }
+  font-size: var(--fontSizeS);
 }
 
-.switchText {
-  flex: 1;
-  font-size: 12.5rem;
-  color: var(--menuText1Normal);
+.menuItemOn,
+.menuItemOn:hover {
+  background-color: var(--selectedColor);
+  color: #fff;
 }
 
-.switchDesc {
-  font-size: 11rem;
-  color: var(--menuText2Normal);
-  margin-top: 1rem;
-}
-
-.toggle {
-  width: 30rem;
-  height: 17rem;
-  border-radius: 9rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  position: relative;
-  margin-left: 10rem;
-}
-
-.toggleKnob {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  width: 13rem;
-  height: 13rem;
-  border-radius: 7rem;
-  background-color: #d6dee4;
-}
-
-.switch.on .toggle {
-  background-color: var(--accentColorNormal);
-}
-
-.switch.on .toggleKnob {
-  left: 15rem;
-  background-color: #ffffff;
-}
-
-.stepper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin-top: 6rem;
-  font-size: 12.5rem;
-}
-
-.stepperName {
-  flex: 1;
-}
-
-.stepBtn {
-  width: 26rem;
-  height: 26rem;
-  border-radius: 4rem;
-  background-color: rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15rem;
-  font-weight: bold;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.16);
-  }
-}
-
-.stepValue {
-  min-width: 46rem;
-  margin: 0 6rem;
-  text-align: center;
-  line-height: 26rem;
-  border-radius: 4rem;
-  background-color: rgba(0, 0, 0, 0.35);
-  font-size: 12rem;
-}
-
-.signBtn {
-  margin-left: 8rem;
-  height: 26rem;
-  padding: 0 8rem;
-  border-radius: 4rem;
-  background-color: rgba(255, 255, 255, 0.08);
-  font-size: 11rem;
-  line-height: 26rem;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.16);
-  }
-}
-
-.listRow {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 5rem 6rem;
-  border-radius: 4rem;
-  font-size: 12.5rem;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-  }
-}
-
-.check {
-  width: 15rem;
-  height: 15rem;
-  margin-right: 8rem;
-  border-radius: 3rem;
-  border: 1.5rem solid rgba(255, 255, 255, 0.45);
-}
-
-.radio {
-  border-radius: 8rem;
-}
-
-.listRow.on .check {
-  background-color: var(--accentColorNormal);
-  border-color: var(--accentColorNormal);
-}
-
-.rowIcon {
-  width: 22rem;
-  height: 22rem;
-  margin-right: 8rem;
-}
-
-.rowName {
-  flex: 1;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.miniSearch {
-  margin-bottom: 6rem;
-}
-
-.miniInput {
-  width: 100% !important;
-  padding: 4rem 8rem !important;
-  font-size: 12.5rem;
-  line-height: 18rem;
-}
-
-.hint {
-  margin-top: 8rem;
-  font-size: 11.5rem;
-  color: var(--menuText2Normal);
-}
-
-// ---------- popovers ----------
-
-.pop {
-  position: absolute;
-  z-index: 10;
-  min-width: 230rem;
-  padding: 8rem;
-  border-radius: 7rem;
-  background-color: var(--panelColorDark);
-  border: 1rem solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 10rem 30rem rgba(0, 0, 0, 0.55);
-  pointer-events: auto;
-  color: var(--menuText1Normal);
-}
-
-.popTitle {
-  margin: 2rem 2rem 8rem 2rem;
-  font-size: 10rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  color: var(--menuText2Normal);
-}
-
-.popOpt {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 7rem 8rem;
-  border-radius: 4rem;
-  font-size: 12.5rem;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.07);
-  }
-
-  &.on {
-    background-color: rgba(72, 140, 211, 0.35);
-  }
-}
-
-.popOptIcon {
+.menuIcon {
   width: 18rem;
   height: 18rem;
   margin-right: 8rem;
 }
 
-.popSep {
+.menuSep {
   height: 1rem;
-  margin: 6rem 0;
-  background-color: rgba(255, 255, 255, 0.1);
+  margin: 4rem 0;
+  background-color: #3c404c;
+}
+
+.menuStepper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 3rem 7rem;
+}
+
+.menuStepperLabel {
+  flex: 1;
+  font-size: var(--fontSizeS);
+  color: var(--textColorDim);
+}
+
+.modeRow {
+  display: flex;
+  flex-direction: row;
+  margin: 0 4rem 6rem 4rem;
+}
+
+.modeBtn {
+  flex: 1;
+  padding: 4rem 0;
+  margin-right: var(--gap3);
+  border-radius: 3rem;
+  text-align: center;
+  font-size: var(--fontSizeXS);
+  color: var(--textColorDim);
+  background-color: #1a1c21;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &:hover {
+    background-color: var(--hoverColorNormal);
+  }
+}
+
+.modeBtnOn,
+.modeBtnOn:hover {
+  background-color: var(--selectedColor);
+  color: #fff;
 }
 
 .lotGrid {
-  margin: 6rem 2rem 4rem 2rem;
+  margin: 4rem 4rem 4rem 4rem;
 }
 
 .lotRow {
@@ -1147,94 +754,194 @@
 .lotCell {
   width: 30rem;
   height: 30rem;
-  margin: 0 3rem 3rem 0;
+  margin: 0 var(--gap4) var(--gap4) 0;
   border-radius: 3rem;
-  background-color: rgba(255, 255, 255, 0.08);
-  font-size: 9.5rem;
+  background-color: #1a1c21;
+  font-size: var(--fontSizeXXS);
   line-height: 30rem;
   text-align: center;
   color: rgba(0, 0, 0, 0);
+}
 
-  &.hl {
-    background-color: rgba(82, 190, 228, 0.45);
-    color: #ffffff;
-  }
+.lotCellLit {
+  background-color: var(--selectedColorDark);
+  color: #fff;
+}
 
-  &.cur {
-    background-color: var(--accentColorNormal);
-    color: #06222c;
-  }
+.lotCellCurrent {
+  background-image: linear-gradient(var(--gradientHighlightStart), var(--gradientHighlightEnd));
+  color: #fff;
 }
 
 .lotAxis {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin: 0 2rem;
-  font-size: 10rem;
-  color: var(--menuText2Normal);
+  margin: 2rem 7rem;
+  font-size: var(--fontSizeXS);
+  color: var(--textColorDim);
 }
 
-// ---------- hover card ----------
+// ---------- drawers ----------
 
-.card {
+.drawer {
   position: absolute;
-  width: 250rem;
-  pointer-events: none;
-  border-radius: 8rem;
-  overflow: hidden;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--panelColorNormal);
+  background-image: linear-gradient(var(--panelGradientStart), var(--panelGradientEnd));
+  border-top: 1rem solid rgba(255, 255, 255, 0.08);
+}
+
+.drawerHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8rem 10rem 6rem 12rem;
   background-color: var(--panelColorDark);
-  border: 1rem solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 10rem 30rem rgba(0, 0, 0, 0.5);
+}
+
+.drawerTitle {
+  flex: 1;
+  font-size: var(--fontSizeM);
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--accentColorNormal);
+}
+
+.drawerClose {
+  width: 24rem;
+  height: 24rem;
+}
+
+.drawerSub {
+  padding: 8rem 12rem 0 12rem;
+  font-size: var(--fontSizeS);
+  font-weight: bold;
   color: var(--menuText1Normal);
 }
 
-.cardImg {
-  height: 150rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(74, 88, 88, 0.6);
-
-  img {
-    width: 140rem;
-    height: 140rem;
-  }
+.drawerBody {
+  flex: 1;
+  min-height: 0;
 }
 
-.cardBody {
-  padding: 10rem 12rem;
+.drawerPad {
+  padding: 4rem 12rem 12rem 12rem;
 }
 
-.cardTitle {
-  font-size: 14rem;
-  font-weight: bold;
-}
-
-.cardRow {
-  margin-top: 5rem;
-  font-size: 12rem;
-  color: var(--menuText2Normal);
-}
-
-.cardWarn {
-  margin-top: 5rem;
-  font-size: 12rem;
-  color: #ff9b86;
-}
-
-.cardTags {
+.drawerFoot {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  margin-top: 6rem;
+  justify-content: flex-end;
+  padding: 8rem 10rem;
+  background-color: var(--panelColorDark);
 }
 
-.cardTag {
-  margin: 0 4rem 4rem 0;
-  padding: 3rem 7rem;
-  border-radius: 10rem;
-  font-size: 10.5rem;
-  background-color: rgba(82, 190, 228, 0.18);
-  color: #bfe7f5;
+.footBtn {
+  padding: 5rem 16rem;
+  margin-left: 6rem;
+  font-size: var(--fontSizeS);
+}
+
+.footBtnPrimary {
+  background-image: linear-gradient(var(--gradientHighlightStart), var(--gradientHighlightEnd));
+}
+
+.group {
+  margin: 6rem 8rem 0 8rem;
+}
+
+.groupTitle {
+  font-size: var(--fontSizeS);
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--menuText1Normal);
+}
+
+.groupBody {
+  padding: 2rem 0 6rem 0;
+}
+
+.checkRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 4rem 12rem;
+}
+
+.checkToggle {
+  flex: none;
+}
+
+.checkFallback {
+  width: 18rem;
+  height: 18rem;
+  border: 1rem solid var(--textColorDim);
+}
+
+.on {
+  background-color: var(--accentColorNormal);
+}
+
+.checkIcon {
+  width: 22rem;
+  height: 22rem;
+  margin-left: 8rem;
+}
+
+.checkText {
+  flex: 1;
+  margin-left: 8rem;
+  min-width: 0;
+}
+
+.checkLabel {
+  font-size: var(--fontSizeS);
+  color: var(--menuText1Normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkDescription {
+  font-size: var(--fontSizeXS);
+  color: var(--textColorDim);
+}
+
+.signText {
+  font-size: var(--fontSizeXS);
+  font-weight: bold;
+  color: #fff;
+}
+
+.packSearch {
+  padding: 2rem 12rem 4rem 12rem;
+}
+
+.miniInput {
+  width: 100% !important;
+  font-size: var(--fontSizeS);
+}
+
+.fieldLabel {
+  margin: 8rem 0 4rem 0;
+  font-size: var(--fontSizeS);
+  font-weight: bold;
+  color: var(--menuText1Normal);
+}
+
+.inputRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  > *:first-child {
+    flex: 1;
+  }
 }

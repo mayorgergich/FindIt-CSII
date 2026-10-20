@@ -2,8 +2,11 @@ import { trigger, useValue } from "cs2/api";
 import classNames from "classnames";
 import * as B from "bindings";
 import { clickOption, findSection } from "options";
-import { Btn } from "./controls";
+import { DropdownTheme, GLYPH, ToolOptionsTheme } from "native";
+import { Btn, ToolBtn } from "./controls";
 import styles from "./dock.module.scss";
+
+const item = (selected: boolean) => classNames(DropdownTheme.dropdownItem, styles.menuItem, selected && styles.menuItemOn);
 
 export const SortMenu = (props: { onClose: () => void }) => {
   const options = useValue(B.OptionsList$);
@@ -12,30 +15,29 @@ export const SortMenu = (props: { onClose: () => void }) => {
 
   return (
     <>
-      <div className={styles.popTitle}>Sort by</div>
+      <div className={styles.menuTitle}>Sort by</div>
       {sorting?.options.map((o) => (
         <Btn
           key={o.id}
-          className={classNames(styles.popOpt, o.selected && styles.on)}
+          className={item(o.selected)}
           onSelect={() => {
             clickOption(B.Section.Sorting, o.id);
             props.onClose();
           }}
         >
-          <img src={o.icon} className={styles.popOptIcon} />
-          <div>{o.name.replace(/^Sort by /i, "")}</div>
+          <img src={o.icon} className={styles.menuIcon} />
+          <div>{o.name.replace(/^Sort by /i, "").replace(/^\w/, (c) => c.toUpperCase())}</div>
         </Btn>
       ))}
       {order && (
         <>
-          <div className={styles.popSep} />
-          <div className={styles.seg}>
-            {order.options.map((o) => (
-              <Btn key={o.id} className={classNames(styles.segBtn, o.selected && styles.on)} onSelect={() => clickOption(B.Section.SortOrder, o.id)}>
-                {o.name.replace(/ Order$/i, "")}
-              </Btn>
-            ))}
-          </div>
+          <div className={styles.menuSep} />
+          {order.options.map((o) => (
+            <Btn key={o.id} className={item(o.selected)} onSelect={() => clickOption(B.Section.SortOrder, o.id)}>
+              <img src={o.icon} className={styles.menuIcon} />
+              <div>{o.name.replace(/ Order$/i, "")}</div>
+            </Btn>
+          ))}
         </>
       )}
     </>
@@ -43,74 +45,61 @@ export const SortMenu = (props: { onClose: () => void }) => {
 };
 
 const VIEW_NAMES: Record<string, string> = {
-  GridWithText: "Large tiles with names",
-  GridNoText: "Images, names on hover",
-  GridSmall: "Small images",
-  ListSimple: "List",
+  GridTextViewSmall: "Tiles with names",
+  Image: "Large tiles",
+  GridView: "Small tiles",
+  ListViewDense: "List",
 };
 
-const DOCK_NAMES: Record<string, string> = { Left: "Left", Center: "Bottom", Right: "Right" };
+const DOCK_NAMES: Record<number, string> = { 1: "Left", 2: "Bottom", 3: "Right" };
 
 export const ViewMenu = () => {
   const options = useValue(B.OptionsList$);
-  const viewStyle = useValue(B.ViewStyle$);
   const expanded = useValue(B.IsExpanded$);
   const views = findSection(options, B.Section.ViewStyle);
   const alignment = findSection(options, B.Section.Alignment);
   const width = findSection(options, B.Section.Width);
   const height = findSection(options, B.Section.Height);
-  const center = alignment?.options.find((o) => o.id === 2)?.selected ?? false;
+  const bottom = alignment?.options.find((o) => o.id === 2)?.selected ?? false;
 
   const stepper = (label: string, section: typeof width) =>
     section && (
-      <div className={styles.stepper}>
-        <div className={styles.stepperName}>{label}</div>
-        <Btn className={styles.stepBtn} onSelect={() => clickOption(section.id, section.options[0].id, -1)}>
-          -
-        </Btn>
-        <div className={styles.stepValue}>{section.options[0].value}</div>
-        <Btn className={styles.stepBtn} onSelect={() => clickOption(section.id, section.options[0].id, 1)}>
-          +
-        </Btn>
+      <div className={styles.menuStepper}>
+        <div className={styles.menuStepperLabel}>{label}</div>
+        <ToolBtn src={GLYPH.down} className={ToolOptionsTheme.startButton} tooltip="Smaller" onSelect={() => clickOption(section.id, section.options[0].id, -1)} />
+        <div className={classNames(ToolOptionsTheme.numberField, styles.numberField)}>{section.options[0].value}</div>
+        <ToolBtn src={GLYPH.up} className={ToolOptionsTheme.endButton} tooltip="Bigger" onSelect={() => clickOption(section.id, section.options[0].id, 1)} />
       </div>
     );
 
+  const viewName = (icon: string) => Object.keys(VIEW_NAMES).find((k) => icon.includes(k));
+
   return (
     <>
-      <div className={styles.popTitle}>Tiles</div>
+      <div className={styles.menuTitle}>Tiles</div>
       {views?.options.map((o) => (
-        <Btn key={o.id} className={classNames(styles.popOpt, o.selected && styles.on)} onSelect={() => clickOption(B.Section.ViewStyle, o.id)}>
-          <img src={o.icon} className={styles.popOptIcon} />
-          <div>{VIEW_NAMES[viewNameFromIcon(o.icon)] ?? o.name}</div>
+        <Btn key={o.id} className={item(o.selected)} onSelect={() => clickOption(B.Section.ViewStyle, o.id)}>
+          <img src={o.icon} className={styles.menuIcon} />
+          <div>{VIEW_NAMES[viewName(o.icon) ?? ""] ?? o.name}</div>
         </Btn>
       ))}
-      <div className={styles.popSep} />
-      <div className={styles.popTitle}>Dock</div>
-      <div className={styles.seg}>
-        {alignment?.options.map((o) => (
-          <Btn key={o.id} className={classNames(styles.segBtn, o.selected && styles.on)} onSelect={() => clickOption(B.Section.Alignment, o.id)}>
-            {DOCK_NAMES[["Left", "Center", "Right"][o.id - 1]] ?? o.name}
-          </Btn>
-        ))}
-      </div>
-      <div className={styles.popSep} />
-      <div className={styles.popTitle}>Size</div>
+      <div className={styles.menuSep} />
+      <div className={styles.menuTitle}>Dock</div>
+      {alignment?.options.map((o) => (
+        <Btn key={o.id} className={item(o.selected)} onSelect={() => clickOption(B.Section.Alignment, o.id)}>
+          <img src={o.icon} className={styles.menuIcon} />
+          <div>{DOCK_NAMES[o.id] ?? o.name}</div>
+        </Btn>
+      ))}
+      <div className={styles.menuSep} />
+      <div className={styles.menuTitle}>Size</div>
       {stepper("Width", width)}
       {stepper("Height", height)}
-      {center && (
-        <Btn className={classNames(styles.popOpt, expanded && styles.on)} onSelect={() => trigger(B.G, "SetIsExpanded", !expanded)}>
-          <div>{expanded ? "Expanded (click to shrink)" : "Expand"}</div>
+      {bottom && (
+        <Btn className={item(expanded)} onSelect={() => trigger(B.G, "SetIsExpanded", !expanded)}>
+          <div>{expanded ? "Expanded" : "Expand"}</div>
         </Btn>
       )}
-      <div className={styles.hint}>Current tiles: {VIEW_NAMES[viewStyle] ?? viewStyle}</div>
     </>
   );
 };
-
-function viewNameFromIcon(icon: string): string {
-  if (icon.includes("GridTextViewSmall")) return "GridWithText";
-  if (icon.includes("Image")) return "GridNoText";
-  if (icon.includes("GridView")) return "GridSmall";
-  if (icon.includes("ListView")) return "ListSimple";
-  return "";
-}

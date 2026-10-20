@@ -1,30 +1,37 @@
 import { useValue } from "cs2/api";
-import { useRef, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import classNames from "classnames";
 import * as B from "bindings";
-import {
-  DENSITY_SHORT,
-  MATCH_LABEL,
-  MATCH_MODES,
-  MatchMode,
-  clickOption,
-  findSection,
-  fromFilter,
-  levelLabel,
-  lotLabel,
-  setLevel,
-  setLotSize,
-} from "options";
-import { Btn, Caret } from "./controls";
+import { MATCH_LABEL, MATCH_MODES, MatchMode, clickOption, findSection, fromFilter, lotLabel, setLevel, setLotSize } from "options";
+import { DropdownTheme, GLYPH, ToolOptionsTheme, ToolSection } from "native";
+import { Btn, Glyph, ToolBtn } from "./controls";
 import { MenuKind } from "./Header";
 import styles from "./dock.module.scss";
 
+// One tool-options row: bold label on the left, controls on the right (the game's own layout).
+const Row = (props: { title: string; children: ReactNode }) =>
+  ToolSection ? (
+    <ToolSection title={props.title}>{props.children}</ToolSection>
+  ) : (
+    <div className={ToolOptionsTheme.item}>
+      <div className={ToolOptionsTheme.label}>{props.title}</div>
+      <div className={ToolOptionsTheme.content}>{props.children}</div>
+    </div>
+  );
+
+// A dropdown toggle in the in-game style (dark field, dim text, arrow).
+export const DropToggle = (props: { label: string; active?: boolean; tooltip?: string; onSelect: () => void; anchor: React.RefObject<HTMLDivElement> }) => (
+  <Btn ref={props.anchor} className={classNames(DropdownTheme.dropdownToggle, styles.dropToggle, props.active && styles.dropToggleSet)} tooltip={props.tooltip} onSelect={props.onSelect}>
+    <div className={styles.dropLabel}>{props.label}</div>
+    <Glyph src={GLYPH.down} className={classNames(DropdownTheme.indicator, styles.dropIndicator)} />
+  </Btn>
+);
+
 type BarProps = {
-  menu: MenuKind | null;
   onMenu: (kind: MenuKind, anchor: HTMLElement | null) => void;
 };
 
-// Density, lot size, level and theme, always visible while browsing buildings.
+// Density, lot size, level and theme: the filters you use while browsing buildings.
 export const BuildingBar = (props: BarProps) => {
   const options = useValue(B.OptionsList$);
   const category = useValue(B.CurrentCategory$);
@@ -33,89 +40,62 @@ export const BuildingBar = (props: BarProps) => {
   const level = findSection(options, B.Section.BuildingLevel);
   const theme = findSection(options, B.Section.Theme);
   const lotRef = useRef<HTMLDivElement>(null);
-  const levelRef = useRef<HTMLDivElement>(null);
-  const themeRef = useRef<HTMLDivElement>(null);
+  const modeRef = useRef<HTMLDivElement>(null);
   const isBuildings = category === 100 || category === 200;
 
   if (!zone && !lot && !level) {
     return null;
   }
 
-  const themeSelected = theme?.options.find((o) => o.selected);
-  const themeText = !theme || theme.options[0]?.selected ? "Any" : themeSelected?.name ?? "Any";
+  const levelValue = fromFilter(level);
 
   return (
     <div className={styles.bar}>
       {zone && (
-        <div className={styles.barRow}>
-          <div className={styles.barLabel}>Density</div>
-          <div className={styles.seg}>
-            {zone.options.map((o) => (
-              <Btn
-                key={o.id}
-                className={classNames(styles.segBtn, o.selected && styles.on)}
-                tooltip={o.name}
-                onSelect={() => clickOption(B.Section.ZoneType, o.id)}
-              >
-                {DENSITY_SHORT[o.id] ?? o.name}
-              </Btn>
-            ))}
-          </div>
-        </div>
+        <Row title="Density">
+          {zone.options.map((o) => (
+            <ToolBtn key={o.id} src={o.icon} tooltip={o.name} selected={o.selected} onSelect={() => clickOption(B.Section.ZoneType, o.id)} />
+          ))}
+        </Row>
       )}
-      <div className={styles.barRow}>
-        {lot && (
-          <Btn
-            ref={lotRef}
-            className={classNames(styles.pick, lotLabel(options) !== "Any" && styles.set)}
-            tooltip="Lot size, width × depth in cells"
-            onSelect={() => props.onMenu("lot", lotRef.current)}
-          >
-            <div className={styles.pickLabel}>Lot</div>
-            <div className={styles.pickValue}>{lotLabel(options)}</div>
-            <Caret />
-          </Btn>
-        )}
-        {level && (
-          <Btn
-            ref={levelRef}
-            className={classNames(styles.pick, levelLabel(options) !== "Any" && styles.set)}
-            tooltip="Building level"
-            onSelect={() => props.onMenu("level", levelRef.current)}
-          >
-            <div className={styles.pickLabel}>Level</div>
-            <div className={styles.pickValue}>{levelLabel(options)}</div>
-            <Caret />
-          </Btn>
-        )}
-        {theme && isBuildings && (
-          <Btn
-            ref={themeRef}
-            className={classNames(styles.pick, themeText !== "Any" && styles.set)}
-            tooltip="European or North American style"
-            onSelect={() => props.onMenu("theme", themeRef.current)}
-          >
-            <div className={styles.pickLabel}>Theme</div>
-            <div className={styles.pickValue}>{themeText}</div>
-            <Caret />
-          </Btn>
-        )}
-      </div>
+      {lot && (
+        <Row title="Lot size">
+          <DropToggle anchor={lotRef} label={lotLabel(options)} active={lotLabel(options) !== "Any"} tooltip="Width × depth in cells" onSelect={() => props.onMenu("lot", lotRef.current)} />
+        </Row>
+      )}
+      {level && (
+        <Row title="Level">
+          <ToolBtn
+            src={GLYPH.down}
+            tooltip="Lower"
+            className={ToolOptionsTheme.startButton}
+            disabled={levelValue.value <= 0}
+            onSelect={() => setLevel(Math.max(0, levelValue.value - 1), levelValue.mode)}
+          />
+          <div className={classNames(ToolOptionsTheme.numberField, styles.numberField)}>{levelValue.value ? String(levelValue.value) : "Any"}</div>
+          <ToolBtn
+            src={GLYPH.up}
+            tooltip="Higher"
+            className={ToolOptionsTheme.endButton}
+            disabled={levelValue.value >= 5}
+            onSelect={() => setLevel(Math.min(5, levelValue.value + 1), levelValue.mode)}
+          />
+          <div className={styles.gapS} />
+          <DropToggle anchor={modeRef} label={MATCH_LABEL[levelValue.mode]} tooltip="How the level is matched" onSelect={() => props.onMenu("levelMode", modeRef.current)} />
+        </Row>
+      )}
+      {theme && isBuildings && (
+        <Row title="Theme">
+          {theme.options.map((o) => (
+            <ToolBtn key={o.id} src={o.icon} tooltip={o.name} selected={o.selected} onSelect={() => clickOption(B.Section.Theme, o.id)} />
+          ))}
+        </Row>
+      )}
     </div>
   );
 };
 
-const ModeSwitch = (props: { mode: MatchMode; onChange: (mode: MatchMode) => void }) => (
-  <div className={styles.seg}>
-    {MATCH_MODES.map((m) => (
-      <Btn key={m} className={classNames(styles.segBtn, props.mode === m && styles.on)} onSelect={() => props.onChange(m)}>
-        {MATCH_LABEL[m]}
-      </Btn>
-    ))}
-  </div>
-);
-
-// Click a cell to filter by that lot: 3 wide × 2 deep is one click.
+// Popover: click a cell to filter by that lot. 3 wide × 2 deep is one click.
 export const LotMenu = (props: { onClose: () => void }) => {
   const options = useValue(B.OptionsList$);
   const width = fromFilter(findSection(options, B.Section.LotWidth));
@@ -125,9 +105,7 @@ export const LotMenu = (props: { onClose: () => void }) => {
 
   const changeMode = (m: MatchMode) => {
     setMode(m);
-    if (width.value || depth.value) {
-      setLotSize(width.value, depth.value, m);
-    }
+    if (width.value || depth.value) setLotSize(width.value, depth.value, m);
   };
 
   const rows: JSX.Element[] = [];
@@ -139,7 +117,7 @@ export const LotMenu = (props: { onClose: () => void }) => {
       cells.push(
         <div
           key={w}
-          className={classNames(styles.lotCell, current ? styles.cur : lit && styles.hl)}
+          className={classNames(styles.lotCell, current ? styles.lotCellCurrent : lit && styles.lotCellLit)}
           onMouseEnter={() => setHover([w, d])}
           onClick={() => {
             setLotSize(w, d, mode);
@@ -159,21 +137,17 @@ export const LotMenu = (props: { onClose: () => void }) => {
 
   return (
     <>
-      <div className={styles.popTitle}>Lot size, width × depth</div>
-      <ModeSwitch mode={mode} onChange={changeMode} />
-      <div className={styles.lotAxis} style={{ marginTop: "8rem" }}>
-        <div>Width across</div>
+      <div className={styles.menuTitle}>Lot size</div>
+      <ModeRow mode={mode} onChange={changeMode} />
+      <div className={styles.lotAxis}>
+        <div>Width across, depth down</div>
         <div>{hover ? `${hover[0]} × ${hover[1]}` : lotLabel(options)}</div>
       </div>
       <div className={styles.lotGrid} onMouseLeave={() => setHover(null)}>
         {rows}
       </div>
-      <div className={styles.lotAxis}>
-        <div>Depth down</div>
-      </div>
-      <div className={styles.popSep} />
       <Btn
-        className={styles.popOpt}
+        className={classNames(DropdownTheme.dropdownItem, styles.menuItem)}
         onSelect={() => {
           setLotSize(0, 0, "eq");
           props.onClose();
@@ -186,50 +160,33 @@ export const LotMenu = (props: { onClose: () => void }) => {
   );
 };
 
-export const LevelMenu = () => {
+const ModeRow = (props: { mode: MatchMode; onChange: (mode: MatchMode) => void }) => (
+  <div className={styles.modeRow}>
+    {MATCH_MODES.map((m) => (
+      <Btn key={m} className={classNames(styles.modeBtn, props.mode === m && styles.modeBtnOn)} selected={props.mode === m} onSelect={() => props.onChange(m)}>
+        {MATCH_LABEL[m]}
+      </Btn>
+    ))}
+  </div>
+);
+
+export const LevelModeMenu = (props: { onClose: () => void }) => {
   const options = useValue(B.OptionsList$);
   const level = fromFilter(findSection(options, B.Section.BuildingLevel));
-  const [mode, setMode] = useState<MatchMode>(level.mode);
 
   return (
     <>
-      <div className={styles.popTitle}>Building level</div>
-      <div className={styles.seg} style={{ marginBottom: "8rem" }}>
-        {[0, 1, 2, 3, 4, 5].map((v) => (
-          <Btn key={v} className={classNames(styles.segBtn, level.value === v && styles.on)} onSelect={() => setLevel(v, mode)}>
-            {v === 0 ? "Any" : String(v)}
-          </Btn>
-        ))}
-      </div>
-      <ModeSwitch
-        mode={mode}
-        onChange={(m) => {
-          setMode(m);
-          if (level.value) setLevel(level.value, m);
-        }}
-      />
-    </>
-  );
-};
-
-export const ThemeMenu = (props: { onClose: () => void }) => {
-  const options = useValue(B.OptionsList$);
-  const theme = findSection(options, B.Section.Theme);
-
-  return (
-    <>
-      <div className={styles.popTitle}>Theme</div>
-      {theme?.options.map((o) => (
+      <div className={styles.menuTitle}>Match level</div>
+      {MATCH_MODES.map((m) => (
         <Btn
-          key={o.id}
-          className={classNames(styles.popOpt, o.selected && styles.on)}
+          key={m}
+          className={classNames(DropdownTheme.dropdownItem, styles.menuItem, level.mode === m && styles.menuItemOn)}
           onSelect={() => {
-            clickOption(B.Section.Theme, o.id);
+            if (level.value) setLevel(level.value, m);
             props.onClose();
           }}
         >
-          <img src={o.icon} className={styles.popOptIcon} />
-          <div>{o.name}</div>
+          {MATCH_LABEL[m]}
         </Btn>
       ))}
     </>

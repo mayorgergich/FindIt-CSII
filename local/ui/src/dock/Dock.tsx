@@ -1,32 +1,23 @@
 import { trigger, useValue } from "cs2/api";
 import { game, tool } from "cs2/bindings";
-import { InputActionConsumer } from "cs2/input";
+import { Panel } from "cs2/ui";
 import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import * as B from "bindings";
 import { LocalPrefabEntry } from "types";
 import { activeChips } from "options";
-import {
-  DOCK_SIDE,
-  PICKER_GRID_HEIGHT,
-  PICKER_WIDTH,
-  RAIL_WIDTH,
-  dockHeightPercent,
-  dockWidth,
-  pxToRem,
-  stripGridHeight,
-  stripWidth,
-} from "layout";
+import { PICKER_GRID_HEIGHT, PICKER_WIDTH, dockHeightPercent, dockWidth, pxToRem, stripGridHeight, stripWidth } from "layout";
+import { DropdownTheme } from "native";
 import { setUiState, useUiState } from "store";
-import { Header, MenuKind } from "./Header";
-import { FAVORITE_CATEGORY, Rail, selectCategory } from "./Rail";
-import { ActiveChips, SubChips } from "./Chips";
-import { BuildingBar, LevelMenu, LotMenu, ThemeMenu } from "./BuildingBar";
+import { MenuKind, TitleBar, Toolbar } from "./Header";
+import { CategoryTabs, FAVORITE_CATEGORY, Location, SavedRow, SubTabs, selectCategory } from "./Tabs";
+import { ActiveFilters } from "./Chips";
+import { BuildingBar, LevelModeMenu, LotMenu } from "./BuildingBar";
 import { SortMenu, ViewMenu } from "./Menus";
 import { Grid, HoverCard } from "./Grid";
 import { FilterDrawer } from "./FilterDrawer";
 import { BulkTagDrawer, TagDrawer } from "./TagDrawer";
-import { Btn, Chevron } from "./controls";
+import { Btn } from "./controls";
 import styles from "./dock.module.scss";
 
 type Menu = { kind: MenuKind; left: number; top: number };
@@ -73,7 +64,7 @@ export const Dock = () => {
     }
   }, [tagEditorId]);
 
-  // Leaving a #tag search by typing something else leaves the Saved view.
+  // Typing something other than the saved #tag leaves the Saved view.
   useEffect(() => {
     if (savedTag && search.trim().toLowerCase() !== "#" + savedTag.toLowerCase()) {
       setSavedTag(null);
@@ -95,9 +86,9 @@ export const Dock = () => {
   }
 
   const mode: "picker" | "strip" | "left" | "right" = picker ? "picker" : alignment === "Center" ? "strip" : alignment === "Right" ? "right" : "left";
-  const collapsed = ui.collapsed && (mode === "left" || mode === "right");
+  const docked = mode === "left" || mode === "right";
+  const collapsed = ui.collapsed && docked;
   const savedView = savedTag !== null || category === FAVORITE_CATEGORY;
-  const filterCount = activeChips(options).length;
 
   // ---------- actions ----------
 
@@ -108,10 +99,17 @@ export const Dock = () => {
     }
     const dockRect = dockRef.current.getBoundingClientRect();
     const rect = anchor.getBoundingClientRect();
-    setMenu({ kind, left: pxToRem(rect.left - dockRect.left), top: pxToRem(rect.bottom - dockRect.top) + 4 });
+    setMenu({ kind, left: pxToRem(rect.left - dockRect.left), top: pxToRem(rect.bottom - dockRect.top) + 3 });
   };
 
   const closeTagEditor = () => tagEditorId !== 0 && trigger(B.G, "CloseTagEditor");
+
+  const closePanel = () => {
+    if (locked) {
+      trigger(B.G, "ToggleLock");
+    }
+    trigger(B.G, "FindItCloseToggled");
+  };
 
   const toggleFilters = () => {
     closeTagEditor();
@@ -119,21 +117,20 @@ export const Dock = () => {
     setDrawer(drawer === "filters" ? null : "filters");
   };
 
-  const onCategory = (id: number) => {
-    setUiState({ collapsed: false });
+  const leaveSavedTag = () => {
     if (savedTag) {
       setSavedTag(null);
       trigger(B.G, "SearchChanged", "");
     }
+  };
+
+  const onCategory = (id: number) => {
+    leaveSavedTag();
     selectCategory(id);
   };
 
   const onSaved = () => {
-    setUiState({ collapsed: false });
-    if (savedTag) {
-      setSavedTag(null);
-      trigger(B.G, "SearchChanged", "");
-    }
+    leaveSavedTag();
     selectCategory(FAVORITE_CATEGORY);
   };
 
@@ -160,38 +157,25 @@ export const Dock = () => {
     }
     const areaRect = areaRef.current.getBoundingClientRect();
     const rect = element.getBoundingClientRect();
-    const areaHeight = pxToRem(areaRect.height);
-    setHover({ entry, top: Math.max(0, Math.min(pxToRem(rect.top - areaRect.top) - 10, areaHeight - 340)) });
+    setHover({ entry, top: Math.max(0, Math.min(pxToRem(rect.top - areaRect.top) - 8, pxToRem(areaRect.height) - 260)) });
   };
 
-  // Escape: close the innermost thing. While a placement tool is active the game cancels the
-  // tool first (and Find It closes with it unless it's kept open).
+  // Escape, innermost first: menu, tag editor, drawer, tag picking, the asset being placed,
+  // then the panel itself. The native Panel routes Escape here.
   const onBack = () => {
-    if (menu) {
-      setMenu(null);
-      return true;
-    }
-    if (tagEditorId !== 0) {
-      closeTagEditor();
-      return true;
-    }
-    if (drawer) {
-      setDrawer(null);
-      return true;
-    }
+    if (menu) return setMenu(null);
+    if (tagEditorId !== 0) return closeTagEditor();
+    if (drawer) return setDrawer(null);
     if (selectMode) {
       setSelectMode(false);
       setTagSelection([]);
-      return true;
+      return;
     }
     if (activeTool && activeTool.id !== tool.DEFAULT_TOOL) {
-      return false;
+      tool.selectTool(tool.DEFAULT_TOOL);
+      return;
     }
-    if (locked) {
-      trigger(B.G, "ToggleLock");
-    }
-    trigger(B.G, "FindItCloseToggled");
-    return true;
+    closePanel();
   };
 
   // ---------- pieces ----------
@@ -202,9 +186,15 @@ export const Dock = () => {
       sort: <SortMenu onClose={() => setMenu(null)} />,
       view: <ViewMenu />,
       lot: <LotMenu onClose={() => setMenu(null)} />,
-      level: <LevelMenu />,
-      theme: <ThemeMenu onClose={() => setMenu(null)} />,
+      levelMode: <LevelModeMenu onClose={() => setMenu(null)} />,
+      theme: null,
     }[menu.kind];
+
+  const popover = menu && menuContent && (
+    <div className={classNames(DropdownTheme.dropdownMenu, styles.menu)} style={{ left: menu.left + "rem", top: menu.top + "rem" }}>
+      {menuContent}
+    </div>
+  );
 
   const overlay =
     tagEditorId !== 0 ? (
@@ -217,9 +207,9 @@ export const Dock = () => {
 
   const selectBar = selectMode && (
     <div className={styles.selectBar}>
-      <span>{tagSelection.length === 0 ? "Click assets to pick them for tagging" : `${tagSelection.length} picked`}</span>
+      <div className={styles.selectText}>{tagSelection.length === 0 ? "Click assets to pick them for tagging" : `${tagSelection.length} picked`}</div>
       <Btn
-        className={classNames(styles.btn, styles.on)}
+        className={styles.linkBtn}
         disabled={tagSelection.length === 0}
         onSelect={() => {
           setBulkAll(false);
@@ -229,7 +219,7 @@ export const Dock = () => {
         Tag picked
       </Btn>
       <Btn
-        className={styles.btn}
+        className={styles.linkBtn}
         onSelect={() => {
           setBulkAll(true);
           setDrawer("bulk");
@@ -237,7 +227,7 @@ export const Dock = () => {
       >
         Tag all results
       </Btn>
-      <Btn className={styles.btn} onSelect={toggleSelect}>
+      <Btn className={styles.linkBtn} onSelect={toggleSelect}>
         Done
       </Btn>
     </div>
@@ -245,32 +235,19 @@ export const Dock = () => {
 
   const notice = official && !ui.officialNoticeDismissed && (
     <div className={styles.notice}>
-      <span>The official Find It is also switched on. Turn it off in the Paradox launcher to remove its extra toolbar buttons.</span>
+      <div className={styles.selectText}>The official Find It is also switched on. Turn it off in the Paradox launcher.</div>
       <Btn className={styles.linkBtn} onSelect={() => setUiState({ officialNoticeDismissed: true })}>
         OK
       </Btn>
     </div>
   );
 
-  const content = (gridStyle?: { height: string }) => (
-    <div className={styles.content}>
-      {notice}
-      {mode !== "picker" && <SubChips saved={savedView} savedTag={savedTag} onFavorites={onSaved} onTag={onTag} />}
-      {mode !== "picker" && <BuildingBar menu={menu?.kind ?? null} onMenu={openMenu} />}
-      {mode !== "picker" && <ActiveChips />}
-      {selectBar}
-      <div style={gridStyle ?? { flex: 1, display: "flex", minHeight: 0 }}>
-        <Grid selectMode={selectMode} tagSelection={tagSelection} onToggleTagSelection={toggleTagSelection} onHover={onHover} />
-      </div>
-    </div>
-  );
-
-  const header = (
-    <Header
+  const toolbar = (
+    <Toolbar
       picker={mode === "picker"}
       menu={menu?.kind ?? null}
       filtersOpen={drawer === "filters"}
-      filterCount={filterCount}
+      filterCount={activeChips(options).length}
       selectMode={selectMode}
       onMenu={openMenu}
       onToggleFilters={toggleFilters}
@@ -278,81 +255,78 @@ export const Dock = () => {
     />
   );
 
-  const popover = menu && menuContent && (
-    <div className={styles.pop} style={{ left: menu.left + "rem", top: menu.top + "rem" }}>
-      {menuContent}
-    </div>
+  const grid = <Grid selectMode={selectMode} tagSelection={tagSelection} onToggleTagSelection={toggleTagSelection} onHover={onHover} />;
+
+  const browser = (gridHeight?: number) => (
+    <>
+      {toolbar}
+      {mode !== "picker" && <CategoryTabs savedActive={savedTag !== null} onCategory={onCategory} onSaved={onSaved} />}
+      <div className={styles.body}>
+        {notice}
+        {mode !== "picker" && <Location savedTag={savedTag} />}
+        {mode !== "picker" && (savedView ? <SavedRow savedTag={savedTag} onFavorites={onSaved} onTag={onTag} /> : <SubTabs />)}
+        {mode !== "picker" && <BuildingBar onMenu={openMenu} />}
+        {mode !== "picker" && <ActiveFilters />}
+        {selectBar}
+        <div className={styles.gridSlot} style={gridHeight ? { flex: "none", height: gridHeight + "rem" } : undefined}>
+          {grid}
+        </div>
+        {overlay}
+      </div>
+      {popover}
+    </>
   );
 
-  let body: JSX.Element;
-
   if (mode === "picker") {
-    body = (
+    return (
       <div ref={areaRef} className={styles.pickerArea}>
-        <div ref={dockRef} className={styles.dock} style={{ width: PICKER_WIDTH + "rem" }}>
-          <div className={styles.drawerHead}>
-            <div className={styles.drawerTitle}>{title}</div>
-          </div>
-          {header}
-          {content({ height: PICKER_GRID_HEIGHT + "rem" })}
+        <div ref={dockRef} className={styles.frame} style={{ width: PICKER_WIDTH + "rem" }}>
+          <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title={title} onClose={closePanel} />} onClose={onBack}>
+            {browser(PICKER_GRID_HEIGHT)}
+          </Panel>
         </div>
-      </div>
-    );
-  } else if (mode === "strip") {
-    const width = stripWidth(expanded ? expandedColumn : columnSize);
-    const gridHeight = stripGridHeight(expanded ? expandedRow : rowSize);
-    body = (
-      <div ref={areaRef} className={styles.stripArea}>
-        <div ref={dockRef} className={classNames(styles.dock, styles.strip)} style={{ width: width + "rem" }}>
-          {header}
-          <div className={styles.body}>
-            <Rail savedActive={savedTag !== null} onCategory={onCategory} onSaved={onSaved} />
-            {content({ height: gridHeight + "rem" })}
-            {overlay}
-          </div>
-          {popover}
-        </div>
-      </div>
-    );
-  } else {
-    const width = collapsed ? RAIL_WIDTH : dockWidth(rightColumn);
-    const cardOffset = width + 22;
-    body = (
-      <div ref={areaRef} className={classNames(styles.area, styles[mode])}>
-        <div
-          ref={dockRef}
-          className={classNames(styles.dock, collapsed && styles.collapsed)}
-          style={{ width: width + "rem", height: dockHeightPercent(rightRow) + "%" }}
-        >
-          {!collapsed && header}
-          <div className={styles.body}>
-            <Rail savedActive={savedTag !== null} onCategory={onCategory} onSaved={onSaved} />
-            {!collapsed && content()}
-            {!collapsed && overlay}
-          </div>
-          <Btn
-            className={styles.handle}
-            tooltip={collapsed ? "Show the panel" : "Fold the panel to its category rail"}
-            onSelect={() => {
-              setMenu(null);
-              setHover(null);
-              setUiState({ collapsed: !collapsed });
-            }}
-          >
-            <Chevron direction={(mode === "left") === collapsed ? "right" : "left"} />
-          </Btn>
-          {!collapsed && popover}
-        </div>
-        {hover && !collapsed && !selectMode && <HoverCard entry={hover.entry} top={hover.top} side={mode} offset={cardOffset} />}
       </div>
     );
   }
 
+  if (mode === "strip") {
+    return (
+      <div ref={areaRef} className={styles.stripArea}>
+        <div ref={dockRef} className={styles.frame} style={{ width: stripWidth(expanded ? expandedColumn : columnSize) + "rem" }}>
+          <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title="Find It" onClose={closePanel} />} onClose={onBack}>
+            {browser(stripGridHeight(expanded ? expandedRow : rowSize))}
+          </Panel>
+        </div>
+      </div>
+    );
+  }
+
+  const width = dockWidth(rightColumn);
+
   return (
-    <InputActionConsumer actions={{ Back: onBack }} ignoreFocusState>
-      {body}
-    </InputActionConsumer>
+    <div ref={areaRef} className={classNames(styles.area, styles[mode])}>
+      <div ref={dockRef} className={classNames(styles.frame, !collapsed && styles.frameFull)} style={{ width: width + "rem", height: collapsed ? undefined : dockHeightPercent(rightRow) + "%" }}>
+        <Panel
+          className={classNames(styles.panel, collapsed && styles.panelCollapsed)}
+          contentClassName={styles.panelContent}
+          header={
+            <TitleBar
+              title="Find It"
+              collapsed={collapsed}
+              onToggle={() => {
+                setMenu(null);
+                setHover(null);
+                setUiState({ collapsed: !collapsed });
+              }}
+              onClose={closePanel}
+            />
+          }
+          onClose={onBack}
+        >
+          {collapsed ? null : browser()}
+        </Panel>
+      </div>
+      {hover && !collapsed && !selectMode && <HoverCard entry={hover.entry} top={hover.top} side={mode} offset={width + 12} />}
+    </div>
   );
 };
-
-export { DOCK_SIDE };

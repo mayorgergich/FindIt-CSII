@@ -1,18 +1,14 @@
 import { trigger, useValue } from "cs2/api";
-import { Theme } from "cs2/bindings";
-import { getModule } from "cs2/modding";
-import { Scrollable } from "cs2/ui";
+import { Button, InfoSectionFoldout, Scrollable } from "cs2/ui";
 import { FOCUS_DISABLED } from "cs2/input";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import classNames from "classnames";
 import { OptionSection } from "upstream/domain/ContentViewType";
 import * as B from "bindings";
 import { EXTRA_LABEL, PARKING_IDS, clickOption, findSection } from "options";
-import { Btn, MaskIcon } from "./controls";
+import { GLYPH, InputTheme, TextInput, ToolOptionsTheme, ToolSection } from "native";
+import { CheckRow, HeaderIconBtn, ToolBtn } from "./controls";
 import styles from "./dock.module.scss";
-
-const TextInput = getModule("game-ui/common/input/text/text-input.tsx", "TextInput");
-const TextInputTheme: Theme | any = getModule("game-ui/editor/widgets/item/editor-item.module.scss", "classes");
 
 const SIGN_TEXT: Record<number, [string, string]> = {
   4: ["=", "Exactly"],
@@ -21,7 +17,24 @@ const SIGN_TEXT: Record<number, [string, string]> = {
   1: ["less", "Less than"],
 };
 
-// Everything that isn't in the building bar, with names instead of icon walls.
+const Row = (props: { title: string; children: ReactNode }) =>
+  ToolSection ? (
+    <ToolSection title={props.title}>{props.children}</ToolSection>
+  ) : (
+    <div className={ToolOptionsTheme.item}>
+      <div className={ToolOptionsTheme.label}>{props.title}</div>
+      <div className={ToolOptionsTheme.content}>{props.children}</div>
+    </div>
+  );
+
+// A collapsible group, as in the game's info panels.
+const Group = (props: { title: string; open?: boolean; children: ReactNode }) => (
+  <InfoSectionFoldout header={<div className={styles.groupTitle}>{props.title}</div>} initialExpanded={props.open ?? true} className={styles.group}>
+    <div className={styles.groupBody}>{props.children}</div>
+  </InfoSectionFoldout>
+);
+
+// Everything that isn't in the building bar, in the game's own controls, with names.
 export const FilterDrawer = (props: { onClose: () => void }) => {
   const options = useValue(B.OptionsList$);
   const category = useValue(B.CurrentCategory$);
@@ -37,17 +50,6 @@ export const FilterDrawer = (props: { onClose: () => void }) => {
   const parking = extra?.options.filter((o) => PARKING_IDS.includes(o.id)) ?? [];
   const shows = extra?.options.filter((o) => !PARKING_IDS.includes(o.id)) ?? [];
   const buildings = category === 100 || category === 200;
-
-  const segment = (section: OptionSection, labels?: Record<number, string>) => (
-    <div className={styles.seg}>
-      {section.options.map((o) => (
-        <Btn key={o.id} className={classNames(styles.segBtn, o.selected && styles.on)} tooltip={o.name} onSelect={() => clickOption(section.id, o.id)}>
-          {labels?.[o.id] ?? o.name}
-        </Btn>
-      ))}
-    </div>
-  );
-
   const query = packQuery.trim().toLowerCase();
   const packRows = pack ? pack.options.filter((o, i) => i === 0 || query === "" || o.name.toLowerCase().includes(query)) : [];
 
@@ -55,142 +57,126 @@ export const FilterDrawer = (props: { onClose: () => void }) => {
     <div className={styles.drawer}>
       <div className={styles.drawerHead}>
         <div className={styles.drawerTitle}>Filters</div>
-        <Btn className={classNames(styles.btn, styles.iconBtn)} tooltip="Close" onSelect={props.onClose}>
-          <MaskIcon src="coui://uil/Standard/XClose.svg" className={styles.btnIcon} />
-        </Btn>
+        <HeaderIconBtn src={GLYPH.close} className={styles.drawerClose} tooltip="Close filters" onSelect={props.onClose} />
       </div>
       <Scrollable className={styles.drawerBody} vertical trackVisibility="scrollable">
-        <div className={styles.drawerBodyInner}>
-          {shows.length > 0 && (
-            <div className={styles.group}>
-              <div className={styles.groupTitle}>Show</div>
-              {shows.map((o) => (
-                <Btn key={o.id} className={classNames(styles.switch, o.selected && styles.on)} onSelect={() => clickOption(B.Section.Extra, o.id)}>
-                  <div className={styles.switchText}>
-                    <div>{EXTRA_LABEL[o.id]?.[0] ?? o.name}</div>
-                    {EXTRA_LABEL[o.id]?.[1] && <div className={styles.switchDesc}>{EXTRA_LABEL[o.id][1]}</div>}
-                  </div>
-                  <div className={styles.toggle}>
-                    <div className={styles.toggleKnob} />
-                  </div>
-                </Btn>
-              ))}
-            </div>
-          )}
+        {shows.length > 0 && (
+          <Group title="Show">
+            {shows.map((o) => (
+              <CheckRow
+                key={o.id}
+                checked={o.selected}
+                icon={o.icon}
+                label={EXTRA_LABEL[o.id]?.[0] ?? o.name}
+                description={EXTRA_LABEL[o.id]?.[1]}
+                onChange={() => clickOption(B.Section.Extra, o.id)}
+              />
+            ))}
+          </Group>
+        )}
 
-          {(parking.length > 0 || corner || valueSections.length > 0) && (
-            <div className={styles.group}>
-              <div className={styles.groupTitle}>Buildings</div>
-              {parking.length > 0 && (
-                <>
-                  <div className={styles.fieldLabel}>Parking</div>
-                  <div className={styles.seg}>
-                    <Btn
-                      className={classNames(styles.segBtn, !parking.some((o) => o.selected) && styles.on)}
-                      onSelect={() => parking.filter((o) => o.selected).forEach((o) => clickOption(B.Section.Extra, o.id))}
-                    >
-                      Any
-                    </Btn>
-                    {parking.map((o) => (
-                      <Btn key={o.id} className={classNames(styles.segBtn, o.selected && styles.on)} tooltip={o.name} onSelect={() => clickOption(B.Section.Extra, o.id)}>
-                        {o.id === 5 ? "With" : "Without"}
-                      </Btn>
-                    ))}
-                  </div>
-                </>
-              )}
-              {corner && (
-                <>
-                  <div className={styles.fieldLabel}>Corner</div>
-                  {segment(corner, { 7: "Any", 1: "Left", 2: "Front", 4: "Right" })}
-                </>
-              )}
-              {valueSections.map((s) => {
-                const value = s.options[0];
-                return (
-                  <div key={s.id} className={styles.stepper}>
-                    <div className={styles.stepperName}>{s.name}</div>
-                    <Btn className={styles.stepBtn} onSelect={() => clickOption(s.id, value.id, -1)}>
-                      -
-                    </Btn>
-                    <div className={styles.stepValue}>{value.value}</div>
-                    <Btn className={styles.stepBtn} onSelect={() => clickOption(s.id, value.id, 1)}>
-                      +
-                    </Btn>
-                    <Btn
-                      className={styles.signBtn}
-                      tooltip={`${SIGN_TEXT[s.valueSign]?.[1] ?? "Exactly"} (click to change)`}
-                      disabled={s.valueSign === 0}
-                      onSelect={() => clickOption(s.id, value.id, 0)}
-                    >
-                      {SIGN_TEXT[s.valueSign]?.[0] ?? "="}
-                    </Btn>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+        {(parking.length > 0 || corner || valueSections.length > 0) && (
+          <Group title="Buildings">
+            {parking.length > 0 && (
+              <Row title="Parking">
+                <ToolBtn
+                  src="coui://uil/Standard/StarAll.svg"
+                  tooltip="Any"
+                  selected={!parking.some((o) => o.selected)}
+                  onSelect={() => parking.filter((o) => o.selected).forEach((o) => clickOption(B.Section.Extra, o.id))}
+                />
+                {parking.map((o) => (
+                  <ToolBtn key={o.id} src={o.icon} tooltip={o.name} selected={o.selected} onSelect={() => clickOption(B.Section.Extra, o.id)} />
+                ))}
+              </Row>
+            )}
+            {corner && (
+              <Row title="Corner">
+                {corner.options.map((o) => (
+                  <ToolBtn key={o.id} src={o.icon} tooltip={o.name} selected={o.selected} onSelect={() => clickOption(B.Section.Corner, o.id)} />
+                ))}
+              </Row>
+            )}
+            {valueSections.map((s) => {
+              const value = s.options[0];
+              return (
+                <Row key={s.id} title={s.name}>
+                  <ToolBtn src={GLYPH.down} tooltip="Lower" className={ToolOptionsTheme.startButton} onSelect={() => clickOption(s.id, value.id, -1)} />
+                  <div className={classNames(ToolOptionsTheme.numberField, styles.numberField)}>{value.value}</div>
+                  <ToolBtn src={GLYPH.up} tooltip="Higher" className={ToolOptionsTheme.endButton} onSelect={() => clickOption(s.id, value.id, 1)} />
+                  <div className={styles.gapS} />
+                  <ToolBtn
+                    tooltip={`${SIGN_TEXT[s.valueSign]?.[1] ?? "Exactly"} (click to change)`}
+                    disabled={s.valueSign === 0}
+                    onSelect={() => clickOption(s.id, value.id, 0)}
+                  >
+                    <div className={styles.signText}>{SIGN_TEXT[s.valueSign]?.[0] ?? "="}</div>
+                  </ToolBtn>
+                </Row>
+              );
+            })}
+          </Group>
+        )}
 
-          {theme && !buildings && (
-            <div className={styles.group}>
-              <div className={styles.groupTitle}>Theme</div>
-              {theme.options.map((o) => (
-                <Btn key={o.id} className={classNames(styles.listRow, o.selected && styles.on)} onSelect={() => clickOption(B.Section.Theme, o.id)}>
-                  <div className={classNames(styles.check, styles.radio)} />
-                  <img src={o.icon} className={styles.rowIcon} />
-                  <div className={styles.rowName}>{o.name}</div>
-                </Btn>
-              ))}
-            </div>
-          )}
+        {theme && !buildings && (
+          <Group title="Theme">
+            {theme.options.map((o) => (
+              <CheckRow key={o.id} radio checked={o.selected} icon={o.icon} label={o.name} onChange={() => clickOption(B.Section.Theme, o.id)} />
+            ))}
+          </Group>
+        )}
 
-          {pack && (
-            <div className={styles.group}>
-              <div className={styles.groupTitle}>Pack</div>
-              <div className={styles.miniSearch}>
+        {pack && (
+          <Group title="Pack" open={!pack.options[0]?.selected}>
+            {TextInput && (
+              <div className={styles.packSearch}>
                 <TextInput
                   multiline={1}
                   value={packQuery}
                   disabled={false}
                   type="text"
-                  className={classNames(TextInputTheme.input, styles.miniInput)}
+                  className={classNames(InputTheme.input, styles.miniInput)}
                   focusKey={FOCUS_DISABLED}
                   onChange={(e: Event) => setPackQuery((e?.target as HTMLTextAreaElement | null)?.value ?? "")}
                   placeholder="Find a pack"
                 />
               </div>
-              {packRows.map((o, i) => (
-                <Btn key={o.id} className={classNames(styles.listRow, o.selected && styles.on)} onSelect={() => clickOption(B.Section.Pack, o.id)}>
-                  <div className={styles.check} />
-                  {i > 0 && <img src={o.icon} className={styles.rowIcon} />}
-                  <div className={styles.rowName}>{i === 0 ? "All packs" : o.name}</div>
-                </Btn>
-              ))}
-              <div className={styles.hint}>With all packs ticked, picking one shows only that pack. Pick more to add them.</div>
-            </div>
-          )}
+            )}
+            {packRows.map((o, i) => (
+              <CheckRow
+                key={o.id}
+                checked={o.selected}
+                icon={i > 0 ? o.icon : undefined}
+                label={i === 0 ? "All packs" : o.name}
+                onChange={() => clickOption(B.Section.Pack, o.id)}
+              />
+            ))}
+            <div className={styles.hint}>With all packs ticked, picking one shows only that pack. Pick more to add them.</div>
+          </Group>
+        )}
 
-          {dlc && (
-            <div className={styles.group}>
-              <div className={styles.groupTitle}>DLC</div>
-              {dlc.options.map((o, i) => (
-                <Btn key={o.id} className={classNames(styles.listRow, o.selected && styles.on)} onSelect={() => clickOption(B.Section.Dlc, o.id)}>
-                  <div className={classNames(styles.check, styles.radio)} />
-                  {i > 0 && <img src={o.icon} className={styles.rowIcon} />}
-                  <div className={styles.rowName}>{i === 0 ? "Any" : o.name}</div>
-                </Btn>
-              ))}
-            </div>
-          )}
-        </div>
+        {dlc && (
+          <Group title="DLC" open={!dlc.options[0]?.selected}>
+            {dlc.options.map((o, i) => (
+              <CheckRow
+                key={o.id}
+                radio
+                checked={o.selected}
+                icon={i > 0 ? o.icon : undefined}
+                label={i === 0 ? "Any" : o.name}
+                onChange={() => clickOption(B.Section.Dlc, o.id)}
+              />
+            ))}
+          </Group>
+        )}
       </Scrollable>
       <div className={styles.drawerFoot}>
-        <Btn className={styles.btn} onSelect={() => trigger(B.G, "ClearFilters")}>
+        <Button variant="flat" className={styles.footBtn} focusKey={FOCUS_DISABLED} onSelect={() => trigger(B.G, "ClearFilters")}>
           Clear all
-        </Btn>
-        <Btn className={classNames(styles.btn, styles.on)} onSelect={props.onClose}>
+        </Button>
+        <Button variant="flat" className={classNames(styles.footBtn, styles.footBtnPrimary)} focusKey={FOCUS_DISABLED} onSelect={props.onClose}>
           Done
-        </Btn>
+        </Button>
       </div>
     </div>
   );

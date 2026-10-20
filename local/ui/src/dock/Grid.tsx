@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import * as B from "bindings";
 import { LocalPrefabEntry } from "types";
-import { TILE_GAP, pxPerRem, pxToRem, tileSize } from "layout";
-import { MaskIcon } from "./controls";
+import { NAME_HEIGHT, TILE_GAP, pxPerRem, pxToRem, tileSize } from "layout";
+import { DetailTheme, ItemGridTheme, PropertyTheme } from "native";
+import { Glyph } from "./controls";
 import styles from "./dock.module.scss";
 import star from "images/findit_star.svg";
 import starFilled from "images/findit_starFilled.svg";
@@ -39,7 +40,7 @@ export const Grid = (props: GridProps) => {
   const [size, setSize] = useState<[number, number]>([0, 0]);
   const [drag, setDrag] = useState<number | null>(null);
 
-  // Measure after every render; tell C# when the grid changed size by more than a unit.
+  // Measure after every render; tell C# when the grid changed size by a unit or more.
   useEffect(() => {
     const element = gridRef.current;
     if (!element) return;
@@ -86,29 +87,25 @@ export const Grid = (props: GridProps) => {
     <div className={classNames(styles.gridWrap, styles[viewStyle])} onWheel={(e: any) => trigger(B.G, "OnScroll", e.deltaY)}>
       {drag !== null && <div className={styles.scrollBlocker} onMouseMove={onTrackMove} onMouseUp={() => setDrag(null)} />}
       <div ref={gridRef} className={styles.grid}>
-        {list.length === 0 && !loading && <div className={styles.empty}>Nothing matches. Remove a filter above, or use Clear all.</div>}
+        {list.length === 0 && !loading && <div className={styles.empty}>No assets match. Remove a filter above, or clear them all.</div>}
         {size[0] > 0 &&
-          list.map((entry, i) => {
-            const row = Math.floor(i / cols);
-            const col = i % cols;
-            return (
-              <Tile
-                key={entry.id}
-                entry={entry}
-                left={col * (tile.width + TILE_GAP)}
-                top={row * rowHeight - offset}
-                width={tile.width}
-                height={tile.height}
-                viewStyle={viewStyle}
-                selected={selected.has(entry.id)}
-                tagSelected={tagSelected.has(entry.id)}
-                selectMode={props.selectMode}
-                noAssetImage={noAssetImage}
-                onToggleTagSelection={props.onToggleTagSelection}
-                onHover={props.onHover}
-              />
-            );
-          })}
+          list.map((entry, i) => (
+            <Tile
+              key={entry.id}
+              entry={entry}
+              left={(i % cols) * (tile.width + TILE_GAP)}
+              top={Math.floor(i / cols) * rowHeight - offset}
+              width={tile.width}
+              imageHeight={tile.height - (viewStyle === "GridWithText" ? NAME_HEIGHT : 0)}
+              viewStyle={viewStyle}
+              selected={selected.has(entry.id)}
+              tagSelected={tagSelected.has(entry.id)}
+              selectMode={props.selectMode}
+              noAssetImage={noAssetImage}
+              onToggleTagSelection={props.onToggleTagSelection}
+              onHover={props.onHover}
+            />
+          ))}
       </div>
       {maxScroll > 0 ? (
         <div ref={trackRef} className={styles.scrollTrack} onClick={onTrackClick}>
@@ -123,7 +120,7 @@ export const Grid = (props: GridProps) => {
           />
         </div>
       ) : (
-        <div style={{ width: "16rem" }} />
+        <div className={styles.scrollTrackEmpty} />
       )}
     </div>
   );
@@ -134,7 +131,7 @@ type TileProps = {
   left: number;
   top: number;
   width: number;
-  height: number;
+  imageHeight: number;
   viewStyle: string;
   selected: boolean;
   tagSelected: boolean;
@@ -144,6 +141,9 @@ type TileProps = {
   onHover: (entry: LocalPrefabEntry | null, element: HTMLElement | null) => void;
 };
 
+// An asset tile with the vanilla asset menu's classes: same shape, colours, hover and selection,
+// DLC badge top-right and theme badge bottom-left. Find It adds the favourite star and, on hover,
+// favourite / tag / locate / PDX Mods buttons.
 const Tile = (props: TileProps) => {
   const { entry } = props;
   const [hovered, setHovered] = useState(false);
@@ -151,9 +151,10 @@ const Tile = (props: TileProps) => {
   const tileRef = useRef<HTMLDivElement>(null);
   const tagged = (entry.tags?.length ?? 0) + (entry.creatorTags?.length ?? 0) > 0;
   const list = props.viewStyle === "ListSimple";
-  const imageSize = list ? 28 : props.width;
   const thumbnails = entry.thumbnails?.length ? entry.thumbnails : [entry.fallbackThumbnail];
   const thumbnail = props.noAssetImage && !hovered ? entry.fallbackThumbnail : thumbnails[frame % thumbnails.length];
+  const imageSize = list ? 24 : Math.min(props.width, props.imageHeight) * 0.94;
+  const small = props.viewStyle === "GridSmall";
 
   const click = () => {
     if (props.selectMode) {
@@ -163,101 +164,129 @@ const Tile = (props: TileProps) => {
     }
   };
 
-  const action = (event: any, run: () => void) => {
+  const act = (event: any, run: () => void) => {
     event.stopPropagation();
     run();
   };
 
   return (
-    <div
-      ref={tileRef}
-      className={classNames(styles.tile, props.selected && styles.selected, props.tagSelected && styles.tagSelected)}
-      style={{ left: props.left + "rem", top: props.top + "rem", width: props.width + "rem", height: props.height + "rem" }}
-      onClick={click}
-      onMouseEnter={() => {
-        setHovered(true);
-        props.onHover(entry, tileRef.current);
-      }}
-      onMouseLeave={() => {
-        setHovered(false);
-        props.onHover(null, null);
-      }}
-      onMouseMove={entry.random ? () => setFrame(Math.floor(Date.now() / 400)) : undefined}
-    >
-      <div className={styles.thumbBox} style={{ width: imageSize + "rem", height: imageSize + "rem" }}>
+    <>
+      <div
+        ref={tileRef}
+        className={classNames(
+          list ? styles.listItem : ItemGridTheme.item,
+          styles.tile,
+          props.selected && "selected",
+          props.selected && styles.tileSelected,
+          props.tagSelected && styles.tagSelected,
+        )}
+        style={{ left: props.left + "rem", top: props.top + "rem", width: props.width + "rem", height: (list ? 28 : props.imageHeight) + "rem" }}
+        onClick={click}
+        onMouseEnter={() => {
+          setHovered(true);
+          props.onHover(entry, tileRef.current);
+        }}
+        onMouseLeave={() => {
+          setHovered(false);
+          props.onHover(null, null);
+        }}
+        onMouseMove={entry.random ? () => setFrame(Math.floor(Date.now() / 400)) : undefined}
+      >
         <img
-          className={styles.thumb}
+          className={classNames(ItemGridTheme.thumbnail, styles.thumb)}
           src={thumbnail}
+          style={{ width: imageSize + "rem", height: imageSize + "rem" }}
           onError={(e: any) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = entry.fallbackThumbnail;
           }}
         />
-      </div>
-      <div className={styles.tileName}>{entry.name}</div>
-      {entry.favorited && <MaskIcon src={starFilled} className={styles.badgeFav} />}
-      {entry.hot && <div className={styles.badgeHot}>!</div>}
-      {entry.random && props.viewStyle !== "GridSmall" && <MaskIcon src={shuffle} className={styles.badgeRandom} />}
-      {!props.selectMode && props.viewStyle !== "GridSmall" && (
-        <div className={styles.acts}>
-          <div
-            className={classNames(styles.act, entry.favorited && styles.on)}
-            onClick={(e) => action(e, () => trigger(B.G, "ToggleFavorited", entry.id))}
-          >
-            <MaskIcon src={entry.favorited ? starFilled : star} className={styles.actIcon} />
-          </div>
-          <div className={classNames(styles.act, tagged && styles.on)} onClick={(e) => action(e, () => trigger(B.G, "OpenTagEditor", entry.id))}>
-            <MaskIcon src={tagged ? tagFilled : tagIcon} className={styles.actIcon} />
-          </div>
-          {entry.placed > 0 && (
-            <div className={styles.act} onClick={(e) => action(e, () => trigger(B.G, "OnLocateButtonClicked", entry.id))}>
-              <MaskIcon src={placedIcon} className={styles.actIcon} />
+        {list && <div className={styles.listName}>{entry.name}</div>}
+        {!small && !list && entry.dlcThumbnail && <img src={entry.dlcThumbnail} className={classNames(ItemGridTheme.dlc, styles.badge18)} />}
+        {!small && !list && entry.themeThumbnail && <img src={entry.themeThumbnail} className={classNames(ItemGridTheme.theme, styles.badge18)} />}
+        {entry.favorited && <Glyph src={starFilled} className={styles.favBadge} />}
+        {entry.hot && <div className={styles.hotBadge}>!</div>}
+        {entry.random && !small && <Glyph src={shuffle} className={styles.randomBadge} />}
+        {!props.selectMode && !small && (
+          <div className={styles.acts}>
+            <div className={classNames(styles.act, entry.favorited && styles.actOn)} onClick={(e) => act(e, () => trigger(B.G, "ToggleFavorited", entry.id))}>
+              <Glyph src={entry.favorited ? starFilled : star} className={styles.actIcon} />
             </div>
-          )}
-          {entry.pdxId > 0 && (
-            <div className={styles.act} onClick={(e) => action(e, () => trigger(B.G, "OnPdxModsButtonClicked", entry.id))}>
-              <img src="assetdb://gameui/Media/Glyphs/ParadoxModsCloud.svg" style={{ width: "14rem", height: "14rem" }} />
+            <div className={classNames(styles.act, tagged && styles.actOn)} onClick={(e) => act(e, () => trigger(B.G, "OpenTagEditor", entry.id))}>
+              <Glyph src={tagged ? tagFilled : tagIcon} className={styles.actIcon} />
             </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Details for the hovered tile, shown beside the dock (never over it).
-export const HoverCard = (props: { entry: LocalPrefabEntry; top: number; side: "left" | "right"; offset: number }) => {
-  const e = props.entry;
-  const lot = e.lotWidth > 0 ? `${e.lotWidth}×${e.lotDepth} lot` : "";
-  const line1 = [e.subCategoryName, e.zone.replace(/"/g, "").replace(/ Buildings$/, ""), e.level > 0 ? `Level ${e.level}` : "", lot]
-    .filter((x) => x)
-    .join(" · ");
-  const source = e.packNames.length > 0 ? e.packNames.join(", ") : e.vanilla ? "Base game" : "";
-  const tags = (e.creatorTags ?? []).concat(e.tags ?? []);
-  const position = props.side === "left" ? { left: props.offset + "rem" } : { right: props.offset + "rem" };
-
-  return (
-    <div className={styles.card} style={{ ...position, top: props.top + "rem" }}>
-      <div className={styles.cardImg}>
-        <img src={e.thumbnails?.[0] ?? e.fallbackThumbnail} />
-      </div>
-      <div className={styles.cardBody}>
-        <div className={styles.cardTitle}>{e.name}</div>
-        {line1 && <div className={styles.cardRow}>{line1}</div>}
-        {(e.themeName || source) && <div className={styles.cardRow}>{[e.themeName, source].filter((x) => x).join(" · ")}</div>}
-        {e.hasParking && <div className={styles.cardRow}>Has parking</div>}
-        {e.placed > 0 && <div className={styles.cardRow}>Placed {e.placed} {e.placed === 1 ? "time" : "times"} in this city</div>}
-        {e.hot && <div className={styles.cardWarn}>May affect performance</div>}
-        {tags.length > 0 && (
-          <div className={styles.cardTags}>
-            {tags.map((t) => (
-              <div key={t} className={styles.cardTag}>
-                #{t}
+            {entry.placed > 0 && (
+              <div className={styles.act} onClick={(e) => act(e, () => trigger(B.G, "OnLocateButtonClicked", entry.id))}>
+                <Glyph src={placedIcon} className={styles.actIcon} />
               </div>
-            ))}
+            )}
+            {entry.pdxId > 0 && (
+              <div className={styles.act} onClick={(e) => act(e, () => trigger(B.G, "OnPdxModsButtonClicked", entry.id))}>
+                <img src="assetdb://gameui/Media/Glyphs/ParadoxModsCloud.svg" className={styles.actIcon} />
+              </div>
+            )}
           </div>
         )}
       </div>
+      {props.viewStyle === "GridWithText" && (
+        <div className={styles.tileName} style={{ left: props.left + "rem", top: props.top + props.imageHeight + "rem", width: props.width + "rem" }}>
+          {entry.name}
+        </div>
+      )}
+    </>
+  );
+};
+
+const Property = (props: { header: string; value: string }) => (
+  <div className={PropertyTheme.field}>
+    <div className={PropertyTheme.header}>{props.header}</div>
+    <div className={PropertyTheme.content}>
+      <div className={PropertyTheme.value}>{props.value}</div>
+    </div>
+  </div>
+);
+
+// Details for the hovered tile, drawn with the vanilla asset detail panel's classes and shown
+// beside the dock (never over it).
+export const HoverCard = (props: { entry: LocalPrefabEntry; top: number; side: "left" | "right"; offset: number }) => {
+  const e = props.entry;
+  const zone = e.zone.replace(/"/g, "").replace(/ Buildings$/, "");
+  const kind = [e.subCategoryName, zone].filter((x) => x).join(" · ");
+  const source = e.packNames.length > 0 ? e.packNames.join(", ") : e.vanilla ? "Base game" : "";
+  const tags = (e.creatorTags ?? []).concat(e.tags ?? []);
+  const position = props.side === "left" ? { left: props.offset + "rem" } : { right: props.offset + "rem" };
+  const properties: [string, string][] = [];
+  if (e.lotWidth > 0) properties.push(["Lot", `${e.lotWidth}×${e.lotDepth}`]);
+  if (e.level > 0) properties.push(["Level", String(e.level)]);
+  if (e.themeName) properties.push(["Theme", e.themeName]);
+  if (e.hasParking) properties.push(["Parking", "Yes"]);
+  if (e.placed > 0) properties.push(["Placed", String(e.placed)]);
+
+  return (
+    <div className={classNames(DetailTheme.assetDetailPanel, styles.card)} style={{ ...position, top: props.top + "rem" }}>
+      <div className={DetailTheme.titleBar}>
+        <div className={classNames(DetailTheme.title, styles.cardTitle)}>{e.name}</div>
+      </div>
+      <div className={classNames(DetailTheme.content, properties.length === 0 && DetailTheme.lastRow)}>
+        <div className={DetailTheme.scrollContent}>
+          <div className={DetailTheme.previewContainer}>
+            <img className={DetailTheme.preview} src={e.thumbnails?.[0] ?? e.fallbackThumbnail} />
+          </div>
+          <div className={DetailTheme.column}>
+            {kind && <div className={DetailTheme.description}>{kind}</div>}
+            {source && <div className={classNames(DetailTheme.description, styles.cardDim)}>{source}</div>}
+            {e.hot && <div className={styles.cardWarn}>May affect performance</div>}
+            {tags.length > 0 && <div className={styles.cardTags}>{tags.map((t) => "#" + t).join("  ")}</div>}
+          </div>
+        </div>
+      </div>
+      {properties.length > 0 && (
+        <div className={classNames(DetailTheme.statsRow, DetailTheme.lastRow)}>
+          {properties.map(([header, value]) => (
+            <Property key={header} header={header} value={value} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

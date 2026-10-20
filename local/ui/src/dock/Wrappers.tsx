@@ -1,7 +1,7 @@
 import { useValue } from "cs2/api";
 import { ModuleRegistryExtend } from "cs2/modding";
 import * as B from "bindings";
-import { DOCK_SIDE, RAIL_WIDTH, dockWidth } from "layout";
+import { DOCK_SIDE, dockWidth } from "layout";
 import { useUiState } from "store";
 import styles from "upstream/mods/WrapToolOptionsPanel/WrapToolOptionsPanel.module.scss";
 
@@ -18,11 +18,12 @@ export const DockToolOptionsWrapper: ModuleRegistryExtend = (Component) => {
     const rightColumn = useValue(B.RightColumnSize$);
     const ui = useUiState();
 
-    if (!(shown || locked) || picker || alignment === "Center") {
+    // Folded to its title bar, the dock leaves the bottom corner free again.
+    if (!(shown || locked) || picker || alignment === "Center" || ui.collapsed) {
       return <Component {...otherProps}>{children}</Component>;
     }
 
-    const offset = (alignment === "Right" ? RIGHT_DOCK_SIDE : DOCK_SIDE) + (ui.collapsed ? RAIL_WIDTH : dockWidth(rightColumn)) + 24;
+    const offset = (alignment === "Right" ? RIGHT_DOCK_SIDE : DOCK_SIDE) + dockWidth(rightColumn) + 12;
 
     return (
       <div
