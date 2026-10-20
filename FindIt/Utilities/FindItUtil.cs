@@ -16,7 +16,7 @@ using Unity.Entities;
 
 namespace FindIt.Utilities
 {
-	public static class FindItUtil
+	public static partial class FindItUtil
 	{
 		private static List<PrefabIndex> _cachedSearch = new();
 		private static Dictionary<string, CustomPrefabData> customPrefabsData = new();

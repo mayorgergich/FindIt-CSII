@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace FindIt.Domain
 {
-	public class IndexedPrefabList : IEnumerable<PrefabIndex>
+	public partial class IndexedPrefabList : IEnumerable<PrefabIndex>
 	{
 		private static readonly IComparer<SortKey> _sortKeyComparer =
 			Comparer<SortKey>.Create(CompareSortKeys);
@@ -123,6 +123,7 @@ namespace FindIt.Domain
 					PrefabSorting.UIOrder => values.OrderByDescending(PrefabGroupIndex).ThenByDescending(PrefabUIOrder).ThenByDescending(PrefabNameSortKey, _sortKeyComparer),
 					PrefabSorting.UpdatedDate => values.OrderBy(UpdatedDate).ThenByDescending(PrefabNameSortKey, _sortKeyComparer),
 					PrefabSorting.InstalledDate => values.OrderBy(InstalledDate).ThenByDescending(PrefabNameSortKey, _sortKeyComparer),
+					PrefabSorting.LotSize => values.OrderByDescending(LotArea).ThenByDescending(LotWidth).ThenByDescending(PrefabNameSortKey, _sortKeyComparer),
 					_ => values.OrderByDescending(PrefabNameSortKey, _sortKeyComparer),
 				};
 			}
@@ -135,6 +136,7 @@ namespace FindIt.Domain
 					PrefabSorting.UIOrder => values.OrderBy(PrefabGroupIndex).ThenBy(PrefabUIOrder).ThenBy(PrefabNameSortKey, _sortKeyComparer),
 					PrefabSorting.UpdatedDate => values.OrderByDescending(UpdatedDate).ThenBy(PrefabNameSortKey, _sortKeyComparer),
 					PrefabSorting.InstalledDate => values.OrderByDescending(InstalledDate).ThenBy(PrefabNameSortKey, _sortKeyComparer),
+					PrefabSorting.LotSize => values.OrderBy(LotArea).ThenBy(LotWidth).ThenBy(PrefabNameSortKey, _sortKeyComparer),
 					_ => values.OrderBy(PrefabNameSortKey, _sortKeyComparer),
 				};
 			}

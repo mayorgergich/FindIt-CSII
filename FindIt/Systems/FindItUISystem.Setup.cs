@@ -269,10 +269,14 @@ namespace FindIt.Systems
 			CreateTrigger<int>("OnLocateButtonClicked", OnLocateButtonClicked);
 			CreateTrigger<int>("OnPdxModsButtonClicked", OnPdxModsButtonClicked);
 			CreateTrigger("ClearThumbnails", () => _AllThumbnails.Value = new string[0]);
+
+			CreateLocalBindings();
 		}
 
 		protected override void OnUpdate()
 		{
+			LocalOnUpdate();
+
 			var navigationKeysEnabled = (_ShowFindItPanel || _IsWindowLocked) && !_IsPrefabSelection;
 
 			_randomKeyBinding.shouldBeEnabled =

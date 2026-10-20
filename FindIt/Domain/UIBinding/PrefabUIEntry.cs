@@ -6,7 +6,7 @@ using Unity.Entities;
 
 namespace FindIt.Domain.UIBinding
 {
-	public class PrefabUIEntry : IJsonWritable
+	public partial class PrefabUIEntry : IJsonWritable
 	{
 		private readonly PrefabIndexBase _prefab;
 		private readonly int _placed;
@@ -79,6 +79,8 @@ namespace FindIt.Domain.UIBinding
 			{
 				writer.Write(new[] { _prefab.Thumbnail });
 			}
+
+			WriteLocal(writer);
 
 			writer.TypeEnd();
 		}

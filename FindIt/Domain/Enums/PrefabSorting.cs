@@ -7,6 +7,7 @@
 		LastUsed,
 		InstalledDate,
 		UpdatedDate,
-		UIOrder
+		UIOrder,
+		LotSize
 	}
 }

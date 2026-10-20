@@ -26,6 +26,7 @@ namespace FindIt.Domain.Options
 				[PrefabSorting.InstalledDate] = "coui://findit/dateAdd.svg",
 				[PrefabSorting.UpdatedDate] = "coui://findit/dateUpdate.svg",
 				[PrefabSorting.UIOrder] = "coui://findit/numbers.svg",
+				[PrefabSorting.LotSize] = "coui://findit/buildings.svg",
 			};
 		}
 

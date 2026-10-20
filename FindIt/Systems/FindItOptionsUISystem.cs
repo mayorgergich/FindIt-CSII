@@ -35,6 +35,8 @@ namespace FindIt.Systems
 
 			CreateTrigger<int, int, int>("OptionClicked", OptionClicked);
 			CreateTrigger("ClearFilters", ClearFilters);
+
+			CreateLocalTriggers();
 		}
 
 		public override void RefreshOptions()

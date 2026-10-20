@@ -13,6 +13,7 @@
   "Tooltip.LABEL[FindIt.SortingUIOrder]": "Sort by the default asset UI order",
   "Tooltip.LABEL[FindIt.SortingInstalledDate]": "Sort by most recently installed from PDX Mods",
   "Tooltip.LABEL[FindIt.SortingUpdatedDate]": "Sort by most recently updated from PDX Mods",
+  "Tooltip.LABEL[FindIt.SortingLotSize]": "Sort by lot size",
   "Tooltip.LABEL[FindIt.ViewGridWithText]": "Grid with text view",
   "Tooltip.LABEL[FindIt.ViewGridNoText]": "Grid with no text view",
   "Tooltip.LABEL[FindIt.ViewGridSmall]": "Small Grid with no text view",

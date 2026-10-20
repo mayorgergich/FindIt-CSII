@@ -5,12 +5,14 @@ using Unity.Entities;
 
 namespace FindIt.Utilities
 {
-    internal static class GridUtil
+    internal static partial class GridUtil
     {
         private static readonly FindItUISystem _findItUISystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<FindItUISystem>();
 
         internal static float GetCurrentColumnCount()
         {
+            if (TryGetMeasuredColumns(out var measuredColumns)) return measuredColumns;
+
             var width = GetWidth();
             var itemWidth = _findItUISystem.ViewStyle switch
             {
@@ -48,6 +50,8 @@ namespace FindIt.Utilities
 
         internal static float GetCurrentRowCount()
         {
+            if (TryGetMeasuredRows(out var measuredRows)) return measuredRows;
+
             var height = GetHeight();
             var itemHeight = _findItUISystem.ViewStyle switch
             {
