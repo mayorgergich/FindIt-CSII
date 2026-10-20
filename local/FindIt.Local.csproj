@@ -1,0 +1,88 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Linux build of Find It (local copy, never published).
+    Compiles the author's sources in ../FindIt against the game's own Mono assemblies,
+    the same way the official CSII toolchain does, minus its Windows-only post-processor.
+    Upstream files are left untouched so new releases rebase cleanly.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>FindIt</AssemblyName>
+    <RootNamespace>FindIt</RootNamespace>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>portable</DebugType>
+    <NoWarn>$(NoWarn);CS1591;CS0618;CS0649;CS0169;CS0414;CS8632</NoWarn>
+    <Product>Find It (local)</Product>
+    <Company>T. D. W.</Company>
+
+    <SourceDir>$(MSBuildProjectDirectory)/../FindIt</SourceDir>
+    <GamePath>$(HOME)/.local/share/Steam/steamapps/common/Cities Skylines II</GamePath>
+    <ManagedPath>$(GamePath)/Cities2_Data/Managed</ManagedPath>
+    <UserDataPath>$(HOME)/.local/share/Steam/steamapps/compatdata/949230/pfx/drive_c/users/steamuser/AppData/LocalLow/Colossal Order/Cities Skylines II</UserDataPath>
+    <!-- Unity Entities source generators, matching the game's com.unity.entities 1.3.10 (see local/fetch-entities.sh). -->
+    <EntitiesSourceGenPath>$(MSBuildProjectDirectory)/.tools/entities-1.3.10/SourceGenerators</EntitiesSourceGenPath>
+    <!-- Version shown in the game: upstream version + "-local". Set by build.sh. -->
+    <Version Condition="'$(Version)' == ''">0.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(SourceDir)/**/*.cs" Exclude="$(SourceDir)/obj/**;$(SourceDir)/bin/**;$(SourceDir)/UI/**" />
+    <Compile Include="$(MSBuildProjectDirectory)/src/**/*.cs" />
+    <EmbeddedResource Include="$(SourceDir)/Locale.json" LogicalName="FindIt.Locale.json" />
+    <EmbeddedResource Include="$(SourceDir)/Locale/*.json" LogicalName="FindIt.Locale.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(SourceDir)/Resources/Blacklist.txt" LogicalName="FindIt.Resources.Blacklist.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Analyzer Include="$(EntitiesSourceGenPath)/SystemGenerator.SystemAPI.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/SystemGenerator.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/SystemGenerator.SystemAPI.QueryBuilder.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/SystemGenerator.LambdaJobs.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/SystemGenerator.Common.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/SystemGenerator.SystemAPI.Query.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/SystemGenerator.EntityQueryBulkOperations.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/AspectGenerator.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/Common.dll" />
+    <Analyzer Include="$(EntitiesSourceGenPath)/JobEntityGenerator.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Runtime (the game's Mono) -->
+    <Reference Include="mscorlib" HintPath="$(ManagedPath)/mscorlib.dll" Private="false" />
+    <Reference Include="netstandard" HintPath="$(ManagedPath)/netstandard.dll" Private="false" />
+    <Reference Include="System" HintPath="$(ManagedPath)/System.dll" Private="false" />
+    <Reference Include="System.Core" HintPath="$(ManagedPath)/System.Core.dll" Private="false" />
+    <Reference Include="System.Runtime" HintPath="$(ManagedPath)/System.Runtime.dll" Private="false" />
+    <Reference Include="System.Net.Http" HintPath="$(ManagedPath)/System.Net.Http.dll" Private="false" />
+    <!-- Same list as FindIt/FindIt.csproj -->
+    <Reference Include="Game" HintPath="$(ManagedPath)/Game.dll" Private="false" />
+    <Reference Include="Colossal.Core" HintPath="$(ManagedPath)/Colossal.Core.dll" Private="false" />
+    <Reference Include="Colossal.Collections" HintPath="$(ManagedPath)/Colossal.Collections.dll" Private="false" />
+    <Reference Include="Colossal.Logging" HintPath="$(ManagedPath)/Colossal.Logging.dll" Private="false" />
+    <Reference Include="Colossal.IO.AssetDatabase" HintPath="$(ManagedPath)/Colossal.IO.AssetDatabase.dll" Private="false" />
+    <Reference Include="Colossal.UI" HintPath="$(ManagedPath)/Colossal.UI.dll" Private="false" />
+    <Reference Include="Colossal.UI.Binding" HintPath="$(ManagedPath)/Colossal.UI.Binding.dll" Private="false" />
+    <Reference Include="Colossal.Localization" HintPath="$(ManagedPath)/Colossal.Localization.dll" Private="false" />
+    <Reference Include="Colossal.Mathematics" HintPath="$(ManagedPath)/Colossal.Mathematics.dll" Private="false" />
+    <Reference Include="Colossal.PSI.Common" HintPath="$(ManagedPath)/Colossal.PSI.Common.dll" Private="false" />
+    <Reference Include="Colossal.PSI.PdxSdk" HintPath="$(ManagedPath)/Colossal.PSI.PdxSdk.dll" Private="false" />
+    <Reference Include="PDX.SDK" HintPath="$(ManagedPath)/PDX.SDK.dll" Private="false" />
+    <Reference Include="Unity.InputSystem" HintPath="$(ManagedPath)/Unity.InputSystem.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ManagedPath)/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="Unity.Burst" HintPath="$(ManagedPath)/Unity.Burst.dll" Private="false" />
+    <Reference Include="Unity.Collections" HintPath="$(ManagedPath)/Unity.Collections.dll" Private="false" />
+    <Reference Include="Unity.Entities" HintPath="$(ManagedPath)/Unity.Entities.dll" Private="false" />
+    <Reference Include="Unity.Mathematics" HintPath="$(ManagedPath)/Unity.Mathematics.dll" Private="false" />
+  </ItemGroup>
+
+</Project>
