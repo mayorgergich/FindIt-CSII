@@ -40,8 +40,8 @@ export const Grid = (props: GridProps) => {
   const [size, setSize] = useState<[number, number]>([0, 0]);
   const [drag, setDrag] = useState<number | null>(null);
 
-  // Measure after every render; tell C# when the grid changed size by a unit or more.
-  useEffect(() => {
+  // Tell C# when the grid changed size by a unit or more.
+  const measure = () => {
     const element = gridRef.current;
     if (!element) return;
 
@@ -49,12 +49,23 @@ export const Grid = (props: GridProps) => {
     const width = Math.round(pxToRem(rect.width));
     const height = Math.round(pxToRem(rect.height));
 
+    if (width <= 0 || height <= 0) return; // not laid out yet
+
     if (Math.abs(width - lastSent.current[0]) >= 1 || Math.abs(height - lastSent.current[1]) >= 1) {
       lastSent.current = [width, height];
       setSize([width, height]);
       trigger(B.G, "SetGridSize", width, height);
     }
-  });
+  };
+
+  // After every render, and a few times a second: Gameface lays out after React's effects run, so
+  // a fresh grid reads 0x0 at first, and layout changes that don't re-render React (the panel's
+  // height, the toolbar, a stylesheet) would otherwise go unnoticed. Seen in-game 2026-10-20.
+  useEffect(measure);
+  useEffect(() => {
+    const id = window.setInterval(measure, 250);
+    return () => window.clearInterval(id);
+  }, []);
 
   const tile = tileSize(viewStyle, size[0], columns);
   const rowHeight = tile.height + TILE_GAP;
