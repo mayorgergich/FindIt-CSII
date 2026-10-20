@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "isolatedModules": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "src",
+    "skipLibCheck": true,
+    "typeRoots": [
+      "../../FindIt/UI/types",
+      "./node_modules/@types"
+    ],
+    "resolveJsonModule": true,
+    "paths": {
+      "mod.json": [
+        "../mod.json"
+      ],
+      "upstream/*": [
+        "../../../FindIt/UI/src/*"
+      ],
+      "mods/*": [
+        "../../../FindIt/UI/src/mods/*"
+      ],
+      "domain/*": [
+        "../../../FindIt/UI/src/domain/*"
+      ],
+      "images/*": [
+        "../../../FindIt/UI/src/images/*"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "../../FindIt/UI/types"
+  ]
+}

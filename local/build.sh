@@ -40,13 +40,13 @@ dotnet build "$LOCAL/FindIt.Local.csproj" -c Release -nologo -v q \
 [[ -f "$LOCAL/bin/Release/FindIt.dll" ]] || { echo "C# build failed"; exit 1; }
 dotnet "$LOCAL/tools/DotsPatcher/bin/Release/net10.0/DotsPatcher.dll" "$LOCAL/bin/Release/FindIt.dll" "$MANAGED"
 
-# 4. UI.
+# 4. UI: the local dock UI (local/ui), built as the "FindItLocal" module with the author's toolchain.
 pushd "$ROOT/FindIt/UI" >/dev/null
 [[ -d node_modules ]] || npm ci --no-audit --no-fund
 rm -rf "$DIST"
-npx webpack --config ../../local/webpack.local.js >/dev/null
+npx webpack --config ../../local/ui/webpack.ui.js
 popd >/dev/null
-[[ -f "$DIST/FindIt.mjs" ]] || { echo "UI build failed"; exit 1; }
+[[ -f "$DIST/FindItLocal.mjs" ]] || { echo "UI build failed"; exit 1; }
 
 # 5. Assemble the mod folder (same layout as the official package, minus Burst native libraries).
 cp "$LOCAL/bin/Release/FindIt.dll" "$LOCAL/bin/Release/FindIt.pdb" "$DIST/"

@@ -4,3 +4,4 @@ dist/
 .tools/
 tools/*/bin/
 tools/*/obj/
+ui/node_modules
