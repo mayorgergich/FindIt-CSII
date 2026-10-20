@@ -38,7 +38,9 @@ export function tileSize(viewStyle: string, gridWidth: number, columns: number) 
 let cachedPxPerRem = 0;
 let cachedFor = "";
 
-// Screen pixels per rem, measured from the root font size (or a probe element as a fallback).
+// Screen pixels per rem, from the root font size. Gameface's getComputedStyle returns that size
+// as written in the game's index.css ("0.0520833vw" or "0.0925926vh"), not in px, so the unit
+// is converted here. A probe element reads 0 (no synchronous layout), so it isn't used.
 export function pxPerRem(): number {
   const key = `${window.innerWidth}x${window.innerHeight}`;
 
@@ -49,23 +51,22 @@ export function pxPerRem(): number {
   let value = 0;
 
   try {
-    value = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+    const size = window.getComputedStyle(document.documentElement).fontSize.trim();
+    const number = parseFloat(size);
+
+    if (size.endsWith("vw")) value = (number * window.innerWidth) / 100;
+    else if (size.endsWith("vh")) value = (number * window.innerHeight) / 100;
+    else if (size.endsWith("px")) value = number;
   } catch {
     value = 0;
   }
 
-  if (!(value > 0)) {
-    const probe = document.createElement("div");
-    probe.style.position = "absolute";
-    probe.style.width = "1000rem";
-    probe.style.height = "1rem";
-    probe.style.visibility = "hidden";
-    document.body.appendChild(probe);
-    value = probe.getBoundingClientRect().width / 1000;
-    document.body.removeChild(probe);
+  // Fallback: the game's own rule (16:9 and wider scale by height, taller screens by width).
+  if (!(value > 0) || value > 10) {
+    value = window.innerHeight >= window.innerWidth * 0.5625 ? window.innerWidth / 1920 : window.innerHeight / 1080;
   }
 
-  cachedPxPerRem = value > 0 ? value : window.innerHeight / 1080;
+  cachedPxPerRem = value;
   cachedFor = key;
 
   return cachedPxPerRem;

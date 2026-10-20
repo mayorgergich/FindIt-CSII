@@ -9,6 +9,9 @@ const TerserPlugin = require("terser-webpack-plugin");
 
 const MOD = require("./mod.json");
 const UPSTREAM_UI = path.resolve(__dirname, "../../FindIt/UI");
+// The game loads <module>.css only when the .mjs exports hasCSS (game-ui/modding/utils/load-css);
+// the author's plugin adds that export.
+const { CSSPresencePlugin } = require(path.join(UPSTREAM_UI, "tools/css-presence"));
 const OUTPUT_DIR = path.resolve(__dirname, "../dist/FindIt");
 
 // The game reads the module id from this header comment (UIModuleAsset.ParseModuleInfo).
@@ -113,6 +116,7 @@ module.exports = {
   },
   plugins: [
     new MiniCssExtractPlugin(),
+    new CSSPresencePlugin(),
     // Upstream components import "../../../mod.json" relatively; point every such import at
     // this module's mod.json so they bind to the "FindItLocal" group.
     new webpack.NormalModuleReplacementPlugin(/mod\.json$/, path.resolve(__dirname, "mod.json")),

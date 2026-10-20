@@ -20,7 +20,8 @@ import magnifier from "images/Magnifier.svg";
 export type MenuKind = "sort" | "view" | "lot" | "levelMode" | "theme";
 
 // Native panel title bar: icon, uppercase accent title, collapse toggle, close button.
-export const TitleBar = (props: { title: string; collapsed?: boolean; onToggle?: () => void; onClose: () => void }) => (
+// The game's Panel adds its own close button next to this (it calls the Panel's onClose).
+export const TitleBar = (props: { title: string; collapsed?: boolean; onToggle?: () => void }) => (
   <div className={classNames(PanelTheme.titleBar, styles.titleBar)} onClick={props.onToggle}>
     <img src={magnifier} className={PanelTheme.icon} />
     <div className={classNames(PanelTheme.title, PanelDefaultTheme.title)}>{props.title}</div>
@@ -34,9 +35,6 @@ export const TitleBar = (props: { title: string; collapsed?: boolean; onToggle?:
         />
       </div>
     )}
-    <div onClick={(e) => e.stopPropagation()}>
-      <HeaderIconBtn src={GLYPH.close} className={PanelTheme.closeButton} tooltip="Close (Esc)" onSelect={props.onClose} />
-    </div>
   </div>
 );
 

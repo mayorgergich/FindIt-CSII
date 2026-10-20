@@ -283,7 +283,7 @@ export const Dock = () => {
     return (
       <div ref={areaRef} className={styles.pickerArea}>
         <div ref={dockRef} className={styles.frame} style={{ width: PICKER_WIDTH + "rem" }}>
-          <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title={title} onClose={closePanel} />} onClose={onBack}>
+          <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title={title} />} onClose={onBack}>
             {browser(PICKER_GRID_HEIGHT)}
           </Panel>
         </div>
@@ -295,7 +295,7 @@ export const Dock = () => {
     return (
       <div ref={areaRef} className={styles.stripArea}>
         <div ref={dockRef} className={styles.frame} style={{ width: stripWidth(expanded ? expandedColumn : columnSize) + "rem" }}>
-          <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title="Find It" onClose={closePanel} />} onClose={onBack}>
+          <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title="Find It" />} onClose={onBack}>
             {browser(stripGridHeight(expanded ? expandedRow : rowSize))}
           </Panel>
         </div>
@@ -320,7 +320,6 @@ export const Dock = () => {
                 setHover(null);
                 setUiState({ collapsed: !collapsed });
               }}
-              onClose={closePanel}
             />
           }
           onClose={onBack}

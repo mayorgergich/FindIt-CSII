@@ -83,6 +83,17 @@ $fieldActive: #202228;
   overflow: hidden;
 }
 
+// The game's Panel puts its content in a Scrollable (an outer div and its content div), sized to
+// the content. Let both fill the panel so the grid gets the height that's left; the grid scrolls
+// itself.
+.panelContent > div:first-child,
+.panelContent > div:first-child > div:first-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .titleBar {
   cursor: default;
 }
