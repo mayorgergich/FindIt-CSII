@@ -157,7 +157,9 @@ export const Dock = () => {
     }
     const areaRect = areaRef.current.getBoundingClientRect();
     const rect = element.getBoundingClientRect();
-    setHover({ entry, top: Math.max(0, Math.min(pxToRem(rect.top - areaRect.top) - 8, pxToRem(areaRect.height) - 260)) });
+    // Keep the card below y 102 so it never covers Mod Button Manager's second row (y 56-96).
+    const minTop = Math.max(0, 102 - pxToRem(areaRect.top));
+    setHover({ entry, top: Math.max(minTop, Math.min(pxToRem(rect.top - areaRect.top) - 8, pxToRem(areaRect.height) - 260)) });
   };
 
   // Escape, innermost first: menu, tag editor, drawer, tag picking, the asset being placed,
