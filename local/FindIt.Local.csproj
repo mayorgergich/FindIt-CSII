@@ -70,6 +70,7 @@
     <Reference Include="Colossal.Collections" HintPath="$(ManagedPath)/Colossal.Collections.dll" Private="false" />
     <Reference Include="Colossal.Logging" HintPath="$(ManagedPath)/Colossal.Logging.dll" Private="false" />
     <Reference Include="Colossal.IO.AssetDatabase" HintPath="$(ManagedPath)/Colossal.IO.AssetDatabase.dll" Private="false" />
+    <Reference Include="Colossal.AssetPipeline" HintPath="$(ManagedPath)/Colossal.AssetPipeline.dll" Private="false" />
     <Reference Include="Colossal.UI" HintPath="$(ManagedPath)/Colossal.UI.dll" Private="false" />
     <Reference Include="Colossal.UI.Binding" HintPath="$(ManagedPath)/Colossal.UI.Binding.dll" Private="false" />
     <Reference Include="Colossal.Localization" HintPath="$(ManagedPath)/Colossal.Localization.dll" Private="false" />

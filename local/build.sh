@@ -33,11 +33,15 @@ if [[ ! -f "$LOCAL/tools/DotsPatcher/bin/Release/net10.0/DotsPatcher.dll" || "$L
 	dotnet build "$LOCAL/tools/DotsPatcher/DotsPatcher.csproj" -c Release -nologo -v q
 fi
 
-# 3. C#.
-dotnet build "$LOCAL/FindIt.Local.csproj" -c Release -nologo -v q \
-	-p:Version="$upstream_version" -p:InformationalVersion="$info_version" \
-	| grep -E ' error |Error\(s\)' || true
-[[ -f "$LOCAL/bin/Release/FindIt.dll" ]] || { echo "C# build failed"; exit 1; }
+# 3. C#. A failed build must stop here: never ship a stale FindIt.dll from an earlier build.
+rm -f "$LOCAL/bin/Release/FindIt.dll"
+if ! build_log="$(dotnet build "$LOCAL/FindIt.Local.csproj" -c Release -nologo -v q \
+	-p:Version="$upstream_version" -p:InformationalVersion="$info_version" 2>&1)"; then
+	printf '%s\n' "$build_log" | grep -E ' error ' | sort -u
+	echo "C# build failed"
+	exit 1
+fi
+[[ -f "$LOCAL/bin/Release/FindIt.dll" ]] || { echo "C# build produced no FindIt.dll"; exit 1; }
 dotnet "$LOCAL/tools/DotsPatcher/bin/Release/net10.0/DotsPatcher.dll" "$LOCAL/bin/Release/FindIt.dll" "$MANAGED"
 
 # 4. UI: the local dock UI (local/ui), built as the "FindItLocal" module with the author's toolchain.

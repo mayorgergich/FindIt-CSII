@@ -18,6 +18,8 @@ namespace FindIt.Systems
 		{
 			PrefabUIEntry.AssetNameResolver = prefab => _optionsUISystem.GetAssetName(prefab);
 
+			LocalBuild.RemoveOfficialUiModuleWhenReady();
+
 			_OfficialUiEnabled = CreateBinding("OfficialUiEnabled", false);
 			_TagCounts = CreateBinding("TagCounts", new TagCountUIEntry[0]);
 
