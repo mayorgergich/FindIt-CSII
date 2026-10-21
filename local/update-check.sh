@@ -5,6 +5,7 @@
 # worktree, builds there, and only if everything succeeds moves the "local" branch and deploys.
 # If the local changes no longer apply or the build fails, the deployed copy is left untouched
 # and a desktop notification says so. Nothing happens while the game is running.
+# After a successful install it also updates the user's GitHub fork ("origin" main, step 5).
 #
 # Run by findit-local-update.timer (systemd --user), or by hand: local/update-check.sh [--force]
 set -uo pipefail
@@ -89,7 +90,8 @@ if pgrep -f 'Cities2.ex[e]' >/dev/null; then
 	exit 0
 fi
 
-git branch -f "local-backup-$(date +%Y%m%d-%H%M)" local >/dev/null
+stamp="$(date +%Y%m%d-%H%M)"
+git branch -f "local-backup-$stamp" local >/dev/null
 git reset -q --hard "$(git -C "$WT" rev-parse HEAD)"
 cleanup
 
@@ -110,3 +112,29 @@ notify "$message"
 # Note for the record which official version Paradox Mods has (the launcher keeps that copy too).
 official="$(cp "$USERDATA/launcher-v2.sqlite" "$STATE/l2.sqlite" 2>/dev/null && sqlite3 -readonly "$STATE/l2.sqlite" "select version from mods where pdxId='77240' limit 1;" 2>/dev/null; rm -f "$STATE/l2.sqlite")"
 log "deployed $new_version (upstream ${new:0:7}); Paradox Mods copy is ${official:-unknown}"
+
+# 5. Mirror the updated branch to the user's GitHub fork ("origin", main), as they asked on
+#    2026-10-21. Only reached after the rebase, build and install above all succeeded. The rebase
+#    rewrites the local commits, so this replaces the fork's main, but only while the fork holds
+#    nothing the old local branch didn't have (nothing edited on GitHub), via --force-with-lease.
+#    A failed push never touches the game copy; it only notifies.
+push_to_fork() {
+	git remote get-url origin >/dev/null 2>&1 || return 0
+	if ! GIT_TERMINAL_PROMPT=0 git fetch -q origin main 2>>"$LOG"; then
+		notify "Find It $new_version is installed, but your GitHub fork couldn't be reached to update it. Ask Claude to push it."
+		return 0
+	fi
+	local fork old
+	fork="$(git rev-parse -q --verify refs/remotes/origin/main)" || return 0
+	old="$(git rev-parse "local-backup-$1")"
+	if ! git merge-base --is-ancestor "$fork" "$old"; then
+		notify "Find It $new_version is installed. Your GitHub fork has changes that aren't on this PC, so it was left as it is. Ask Claude to sort it out."
+		return 0
+	fi
+	if GIT_TERMINAL_PROMPT=0 git push -q --force-with-lease="main:$fork" origin refs/heads/local:refs/heads/main >>"$LOG" 2>&1; then
+		log "pushed $new_version to the fork ($(git rev-parse --short refs/heads/local))"
+	else
+		notify "Find It $new_version is installed, but updating your GitHub fork failed. Ask Claude to look at local/.state/update.log."
+	fi
+}
+push_to_fork "$stamp"
