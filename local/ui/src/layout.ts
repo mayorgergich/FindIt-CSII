@@ -37,6 +37,7 @@ export const SNAP_ZONE = 24; // pointer this close to the left/right screen edge
 export const UNDOCK_DISTANCE = 12; // how far a docked title bar is dragged before it comes loose
 export const CLICK_SLOP = 3; // less movement than this is a click (folds the window)
 export const CARD_WIDTH = 330; // hover card, keep in step with .card in dock.module.scss
+export const MENU_WIDTH = 240; // dropdown menus, keep in step with .menu in dock.module.scss
 
 // The game's toolbar scale (0.8 to 1.3), read the way Parking Lot Tool does.
 function toolbarScale(): number {

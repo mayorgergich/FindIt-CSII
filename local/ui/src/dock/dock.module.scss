@@ -505,6 +505,7 @@ $fieldActive: #202228;
 }
 
 .linkBtn {
+  white-space: nowrap;
   margin: 0 0 var(--gap4) 8rem;
   padding: 3rem 4rem;
   font-size: var(--fontSizeXS);
@@ -531,6 +532,20 @@ $fieldActive: #202228;
 .selectText {
   flex: 1;
   color: var(--textColorDim);
+}
+
+// Picking assets to tag: the hint on one line, its three actions on the next (in one row they
+// overlapped in a 420-wide dock).
+.selectBar {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.selectActions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 4rem;
 }
 
 // ---------- grid ----------
@@ -772,11 +787,14 @@ $fieldActive: #202228;
 
 // ---------- popover menus (in-game dropdown classes) ----------
 
+// Menus open inside the panel, which clips anything past its edge, so Dock.tsx keeps them within
+// the dock (MENU_WIDTH in layout.ts) and their lines don't wrap.
 .menu {
   position: absolute;
   z-index: 10;
-  min-width: 220rem;
+  width: 240rem;
   padding: 4rem;
+  white-space: nowrap;
   pointer-events: auto;
   box-shadow: 0 8rem 24rem rgba(0, 0, 0, 0.45);
 }
@@ -794,6 +812,7 @@ $fieldActive: #202228;
   flex-direction: row;
   align-items: center;
   font-size: var(--fontSizeS);
+  white-space: nowrap;
 }
 
 .menuItemOn,
@@ -809,7 +828,7 @@ $fieldActive: #202228;
 }
 
 .menuHint {
-  max-width: 220rem;
+  white-space: normal;
   margin: 2rem 7rem 6rem 7rem;
   font-size: var(--fontSizeXS);
   color: rgba(255, 255, 255, 0.6);
@@ -916,8 +935,9 @@ $fieldActive: #202228;
   z-index: 5;
   display: flex;
   flex-direction: column;
-  background-color: var(--panelColorNormal);
-  background-image: linear-gradient(var(--panelGradientStart), var(--panelGradientEnd));
+  // Solid: the panel colour is translucent (the game blurs what's behind a panel, not what's
+  // inside it), so the grid underneath showed through the filters.
+  background-color: #1f2229;
   border-top: 1rem solid rgba(255, 255, 255, 0.08);
 }
 

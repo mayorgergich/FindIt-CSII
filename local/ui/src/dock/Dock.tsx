@@ -13,6 +13,7 @@ import {
   DOCK_TOP,
   FLOAT_DEFAULT_HEIGHT,
   FLOAT_MIN_WIDTH,
+  MENU_WIDTH,
   PICKER_GRID_HEIGHT,
   PICKER_WIDTH,
   Rect,
@@ -152,7 +153,9 @@ export const Dock = () => {
     }
     const dockRect = dockRef.current.getBoundingClientRect();
     const rect = anchor.getBoundingClientRect();
-    setMenu({ kind, left: pxToRem(rect.left - dockRect.left), top: pxToRem(rect.bottom - dockRect.top) + 3 });
+    // Open at the button, but slide left as needed so the whole menu stays inside the dock.
+    const maxLeft = Math.max(4, pxToRem(dockRect.width) - MENU_WIDTH - 6);
+    setMenu({ kind, left: clamp(pxToRem(rect.left - dockRect.left), 4, maxLeft), top: pxToRem(rect.bottom - dockRect.top) + 3 });
   };
 
   const closeTagEditor = () => tagEditorId !== 0 && trigger(B.G, "CloseTagEditor");
@@ -383,28 +386,30 @@ export const Dock = () => {
   const selectBar = selectMode && (
     <div className={styles.selectBar}>
       <div className={styles.selectText}>{tagSelection.length === 0 ? "Click assets to pick them for tagging" : `${tagSelection.length} picked`}</div>
-      <Btn
-        className={styles.linkBtn}
-        disabled={tagSelection.length === 0}
-        onSelect={() => {
-          setBulkAll(false);
-          setDrawer("bulk");
-        }}
-      >
-        Tag picked
-      </Btn>
-      <Btn
-        className={styles.linkBtn}
-        onSelect={() => {
-          setBulkAll(true);
-          setDrawer("bulk");
-        }}
-      >
-        Tag all results
-      </Btn>
-      <Btn className={styles.linkBtn} onSelect={toggleSelect}>
-        Done
-      </Btn>
+      <div className={styles.selectActions}>
+        <Btn
+          className={styles.linkBtn}
+          disabled={tagSelection.length === 0}
+          onSelect={() => {
+            setBulkAll(false);
+            setDrawer("bulk");
+          }}
+        >
+          Tag picked
+        </Btn>
+        <Btn
+          className={styles.linkBtn}
+          onSelect={() => {
+            setBulkAll(true);
+            setDrawer("bulk");
+          }}
+        >
+          Tag all results
+        </Btn>
+        <Btn className={styles.linkBtn} onSelect={toggleSelect}>
+          Done
+        </Btn>
+      </div>
     </div>
   );
 
