@@ -58,7 +58,7 @@ log "upstream moved ${base:0:7} -> ${new:0:7} (version $new_version)"
 # 1. Rebase in a scratch worktree.
 cleanup
 git worktree add -q --detach "$WT" local 2>>"$LOG" || { log "worktree failed"; exit 1; }
-if ! git -C "$WT" -c user.name="Local build" -c user.email="local@localhost" rebase -q upstream/main >>"$LOG" 2>&1; then
+if ! git -C "$WT" -c user.name="mayorgergich" -c user.email="117896074+mayorgergich@users.noreply.github.com" rebase -q upstream/main >>"$LOG" 2>&1; then
 	git -C "$WT" rebase --abort >/dev/null 2>&1
 	cleanup
 	notify "Find It $new_version is out, but your local changes no longer fit it. Your current copy keeps working. Ask Claude to update Find It."
