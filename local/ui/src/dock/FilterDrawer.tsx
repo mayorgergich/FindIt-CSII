@@ -1,12 +1,12 @@
 import { trigger, useValue } from "cs2/api";
-import { Button, InfoSectionFoldout, Scrollable } from "cs2/ui";
+import { Button, Scrollable } from "cs2/ui";
 import { FOCUS_DISABLED } from "cs2/input";
 import { ReactNode, useState } from "react";
 import classNames from "classnames";
 import { OptionSection } from "upstream/domain/ContentViewType";
 import * as B from "bindings";
 import { EXTRA_LABEL, PARKING_IDS, clickOption, findSection } from "options";
-import { GLYPH, InputTheme, TextInput, ToolOptionsTheme, ToolSection } from "native";
+import { GLYPH, InfoSectionFoldout, InputTheme, TextInput, ToolOptionsTheme, ToolSection } from "native";
 import { CheckRow, HeaderIconBtn, ToolBtn } from "./controls";
 import styles from "./dock.module.scss";
 
@@ -27,12 +27,28 @@ const Row = (props: { title: string; children: ReactNode }) =>
     </div>
   );
 
-// A collapsible group, as in the game's info panels.
-const Group = (props: { title: string; open?: boolean; children: ReactNode }) => (
-  <InfoSectionFoldout header={<div className={styles.groupTitle}>{props.title}</div>} initialExpanded={props.open ?? true} className={styles.group}>
-    <div className={styles.groupBody}>{props.children}</div>
-  </InfoSectionFoldout>
-);
+// A collapsible group, as in the game's info panels; a plain one if the game's isn't found.
+const Group = (props: { title: string; open?: boolean; children: ReactNode }) => {
+  const [expanded, setExpanded] = useState(props.open ?? true);
+
+  if (InfoSectionFoldout) {
+    return (
+      <InfoSectionFoldout header={<div className={styles.groupTitle}>{props.title}</div>} initialExpanded={props.open ?? true} className={styles.group}>
+        <div className={styles.groupBody}>{props.children}</div>
+      </InfoSectionFoldout>
+    );
+  }
+
+  return (
+    <div className={styles.group}>
+      <div className={styles.groupTitle} onClick={() => setExpanded(!expanded)}>
+        {expanded ? "▾ " : "▸ "}
+        {props.title}
+      </div>
+      {expanded && <div className={styles.groupBody}>{props.children}</div>}
+    </div>
+  );
+};
 
 // Everything that isn't in the building bar, in the game's own controls, with names.
 export const FilterDrawer = (props: { onClose: () => void }) => {

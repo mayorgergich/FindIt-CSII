@@ -37,6 +37,11 @@ export const ToolOptionsTheme = classes("game-ui/game/components/tool-options/mo
 export const ToolButton = component("game-ui/game/components/tool-options/tool-button/tool-button.tsx", "ToolButton");
 export const ToolSection = component("game-ui/game/components/tool-options/mouse-tool-options/mouse-tool-options.tsx", "Section");
 
+// Collapsible group from the selected-object panel. The modding typings list it in cs2/ui, but the
+// game (checked 2026-10-20) doesn't export it there; importing it from cs2/ui gave undefined, and
+// opening the filter drawer took the whole game UI down (React error #130).
+export const InfoSectionFoldout = component("game-ui/game/components/selected-info-panel/shared-components/info-section/info-section-foldout.tsx", "InfoSectionFoldout");
+
 // In-game dropdowns, text fields, toggles, foldouts, icons.
 export const DropdownTheme = classes("game-ui/game/themes/game-dropdown.module.scss");
 export const InputTheme = classes("game-ui/editor/widgets/item/editor-item.module.scss");
