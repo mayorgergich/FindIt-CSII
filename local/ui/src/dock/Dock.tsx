@@ -1,5 +1,6 @@
 import { trigger, useValue } from "cs2/api";
-import { game, tool } from "cs2/bindings";
+import { game, selectedInfo, tool } from "cs2/bindings";
+import { InputActionConsumer } from "cs2/input";
 import { Panel } from "cs2/ui";
 import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
@@ -72,6 +73,7 @@ export const Dock = () => {
   const title = useValue(B.PrefabSelectionTitle$);
   const activeTool = useValue(tool.activeTool$);
   const activePanel = useValue(game.activeGamePanel$);
+  const hasSelection = useValue(selectedInfo.activeSelection$);
   const ui = useUiState();
 
   const [drawer, setDrawer] = useState<null | "filters" | "bulk">(null);
@@ -366,6 +368,17 @@ export const Dock = () => {
     closePanel();
   };
 
+  // Escape is the game's Back action, and the game gives a key to the highest-priority consumer.
+  // As in the author's 1.6.0 panel: claim Back only when the dock has something of its own to close
+  // (menu, tag editor, drawer, tag picking) or would close itself and the game has nothing to close
+  // first (not locked, default tool, no game panel, nothing selected). Otherwise the game keeps
+  // Escape: an active tool drops first, an open panel closes, and Escape never opens the pause menu
+  // in place of closing Find It. Mounted rather than toggled: the last consumer attached wins.
+  const innerOpen = !!menu || tagEditorId !== 0 || !!drawer || selectMode;
+  const claimsBack =
+    innerOpen || (!locked && (!activeTool || activeTool.id === tool.DEFAULT_TOOL) && activePanel === null && !hasSelection);
+  const backConsumer = claimsBack && <InputActionConsumer actions={{ Back: onBack }} ignoreFocusState={true} />;
+
   // ---------- pieces ----------
 
   const menuContent =
@@ -470,6 +483,7 @@ export const Dock = () => {
   if (mode === "picker") {
     return (
       <div ref={areaRef} className={styles.pickerArea}>
+        {backConsumer}
         <div ref={dockRef} className={styles.frame} style={{ width: PICKER_WIDTH + "rem" }}>
           <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title={title} />} onClose={onBack}>
             {browser(PICKER_GRID_HEIGHT)}
@@ -482,6 +496,7 @@ export const Dock = () => {
   if (mode === "strip") {
     return (
       <div ref={areaRef} className={styles.stripArea}>
+        {backConsumer}
         <div ref={dockRef} className={styles.frame} style={{ width: stripWidth(expanded ? expandedColumn : columnSize) + "rem" }}>
           <Panel className={styles.panel} contentClassName={styles.panelContent} header={<TitleBar title="Find It" />} onClose={onBack}>
             {browser(stripGridHeight(expanded ? expandedRow : rowSize))}
@@ -516,6 +531,7 @@ export const Dock = () => {
     return (
       <>
         <div ref={areaRef} className={styles.floatArea}>
+          {backConsumer}
           {snapPreview}
           <div
             ref={dockRef}
@@ -547,6 +563,7 @@ export const Dock = () => {
   return (
     <>
       <div ref={areaRef} className={classNames(styles.area, styles[mode])} style={{ top: top + "rem" }}>
+        {backConsumer}
         <div ref={dockRef} className={classNames(styles.frame, !collapsed && styles.frameFull)} style={{ width: width + "rem", height: collapsed ? undefined : dockHeightPercent(rightRow) + "%" }}>
           <Panel className={classNames(styles.panel, collapsed && styles.panelCollapsed)} contentClassName={styles.panelContent} header={titleBar} onClose={onBack}>
             {collapsed ? null : browser()}
