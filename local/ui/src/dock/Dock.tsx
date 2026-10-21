@@ -213,7 +213,7 @@ export const Dock = () => {
     }
     const areaRect = areaRef.current.getBoundingClientRect();
     const rect = element.getBoundingClientRect();
-    // Keep the card below Mod Button Manager's two-row bar (it ends at y 96-99).
+    // Keep the card below Mod Button Manager's bar (DOCK_TOP).
     const minTop = Math.max(0, DOCK_TOP - pxToRem(areaRect.top));
     setHover({ entry, top: Math.max(minTop, Math.min(pxToRem(rect.top - areaRect.top) - 8, pxToRem(areaRect.height) - 260)) });
   };

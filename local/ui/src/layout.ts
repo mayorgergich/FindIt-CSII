@@ -1,10 +1,11 @@
 // Sizes are in rem. The game sizes rem from the screen: at 16:9 the screen is 1920 x 1080rem.
 // On other shapes don't assume which side it scales by; pxPerRem() measures it.
 
-// Below Mod Button Manager's two-row top bar (rows at y 10-50 and 56-96, 99 for a 46-unit
-// button). MBM moves the game's info-view menu and selected-object panel to top 108 while its bar
-// shows two rows, so the dock lines up with them. Keep .area's top in dock.module.scss in step.
-export const DOCK_TOP = 108;
+// Below Mod Button Manager's top bar: one row per type (roads & traffic, zoning & buildings,
+// info & planning, tools & settings), rows at y 10/56/102/148, bottom y 188. While the bar is open
+// MBM moves the game's info-view menu and selected-object panel to 10 + rows x 46 + 6 = 200, so
+// the dock lines up with them. Keep .area's top in dock.module.scss in step.
+export const DOCK_TOP = 200;
 export const DOCK_SIDE = 12;
 export const RAIL_WIDTH = 60;
 export const TILE_GAP = 3; // keep in step with local/src/GridUtil.Local.cs

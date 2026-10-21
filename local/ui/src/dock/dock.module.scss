@@ -10,7 +10,7 @@ $fieldActive: #202228;
 
 .area {
   position: absolute;
-  top: 108rem; // DOCK_TOP in layout.ts: below Mod Button Manager's two-row bar
+  top: 200rem; // DOCK_TOP in layout.ts: below Mod Button Manager's four-row bar
   bottom: calc(2 * var(--toolbarHeight) + 6rem);
   display: flex;
   flex-direction: column;
