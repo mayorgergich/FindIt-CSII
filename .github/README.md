@@ -7,9 +7,6 @@ This is a personal fork of [Find It for Cities: Skylines II](https://github.com/
 
 It is **not** made or endorsed by the Find It author. It is **not** published on Paradox Mods, and none of it has been offered back to the original project. For the real mod, get Find It from Paradox Mods.
 
-![The redesigned Find It panel as a floating window](screenshots/findit-floating-window.jpg)
-*The redesigned panel as a floating window: search and tools on one row, category tabs, and a grid sized to the window.*
-
 ## What's different
 
 - **A dock instead of a large centred panel.** A tall panel docked to the left or right edge of the screen, built from the game's own interface pieces so it looks native. Fold it down to its title bar when you don't need it.
