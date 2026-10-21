@@ -10,7 +10,6 @@ import {
   CARD_WIDTH,
   CLICK_SLOP,
   DOCK_SIDE,
-  DOCK_TOP,
   FLOAT_DEFAULT_HEIGHT,
   FLOAT_MIN_WIDTH,
   MENU_WIDTH,
@@ -22,6 +21,7 @@ import {
   clamp,
   clampRect,
   defaultFloatRect,
+  dockTop,
   dockHeightPercent,
   dockWidth,
   pxToRem,
@@ -91,7 +91,17 @@ export const Dock = () => {
   const [live, setLive] = useState<Rect | null>(null);
   const [snap, setSnap] = useState<"left" | "right" | null>(null);
   const [, setScreenVersion] = useState(0);
+  const [top, setTop] = useState(dockTop);
   const open = shown || locked;
+
+  // Follow Mod Button Manager's bar as it opens, closes or changes its row count (it fires no
+  // event, so check a few times a second while the dock is open).
+  useEffect(() => {
+    if (!open) return;
+    setTop(dockTop());
+    const id = window.setInterval(() => setTop(dockTop()), 250);
+    return () => window.clearInterval(id);
+  }, [open]);
 
   // Switching between the monitor and the iPad changes the screen in rem; re-clamp the window.
   useEffect(() => {
@@ -213,8 +223,8 @@ export const Dock = () => {
     }
     const areaRect = areaRef.current.getBoundingClientRect();
     const rect = element.getBoundingClientRect();
-    // Keep the card below Mod Button Manager's bar (DOCK_TOP).
-    const minTop = Math.max(0, DOCK_TOP - pxToRem(areaRect.top));
+    // Keep the card below Mod Button Manager's bar.
+    const minTop = Math.max(0, top - pxToRem(areaRect.top));
     setHover({ entry, top: Math.max(minTop, Math.min(pxToRem(rect.top - areaRect.top) - 8, pxToRem(areaRect.height) - 260)) });
   };
 
@@ -494,7 +504,7 @@ export const Dock = () => {
     if (!snap) return null;
     const s = screenRem();
     const left = snap === "left" ? DOCK_SIDE : s.w - RIGHT_DOCK_SIDE - width;
-    return <div className={styles.snapPreview} style={{ left: left + "rem", top: DOCK_TOP + "rem", width: width + "rem", height: s.h - s.bottom - DOCK_TOP + "rem" }} />;
+    return <div className={styles.snapPreview} style={{ left: left + "rem", top: top + "rem", width: width + "rem", height: s.h - s.bottom - top + "rem" }} />;
   })();
 
   if (mode === "float") {
@@ -536,7 +546,7 @@ export const Dock = () => {
 
   return (
     <>
-      <div ref={areaRef} className={classNames(styles.area, styles[mode])}>
+      <div ref={areaRef} className={classNames(styles.area, styles[mode])} style={{ top: top + "rem" }}>
         <div ref={dockRef} className={classNames(styles.frame, !collapsed && styles.frameFull)} style={{ width: width + "rem", height: collapsed ? undefined : dockHeightPercent(rightRow) + "%" }}>
           <Panel className={classNames(styles.panel, collapsed && styles.panelCollapsed)} contentClassName={styles.panelContent} header={titleBar} onClose={onBack}>
             {collapsed ? null : browser()}

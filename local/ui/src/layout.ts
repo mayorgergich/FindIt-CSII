@@ -1,11 +1,21 @@
 // Sizes are in rem. The game sizes rem from the screen: at 16:9 the screen is 1920 x 1080rem.
 // On other shapes don't assume which side it scales by; pxPerRem() measures it.
 
-// Below Mod Button Manager's top bar: one row per type (roads & traffic, zoning & buildings,
-// info & planning, tools & settings), rows at y 10/56/102/148, bottom y 188. While the bar is open
-// MBM moves the game's info-view menu and selected-object panel to 10 + rows x 46 + 6 = 200, so
-// the dock lines up with them. Keep .area's top in dock.module.scss in step.
-export const DOCK_TOP = 200;
+// Clears the game's top-left HUD row (Info and Mod Button Manager's launcher, y 10-50).
+export const DOCK_TOP_FREE = 64;
+
+// Where the dock starts. While Mod Button Manager's top bar is open with two or more rows, MBM
+// sets data-mbm-panel-top on <html> to the y (rem) where panels may start below it (10 + rows x 46
+// + 6: 200 for its four type rows, 246 with an "Other" row) and moves the game's info-view menu
+// and selected-object panel there; the dock uses the same number. Without it, DOCK_TOP_FREE.
+export function dockTop(): number {
+  try {
+    const value = parseInt(document.documentElement.getAttribute("data-mbm-panel-top") ?? "", 10);
+    return value >= DOCK_TOP_FREE && value < 700 ? value : DOCK_TOP_FREE;
+  } catch {
+    return DOCK_TOP_FREE;
+  }
+}
 export const DOCK_SIDE = 12;
 export const RAIL_WIDTH = 60;
 export const TILE_GAP = 3; // keep in step with local/src/GridUtil.Local.cs
@@ -80,7 +90,8 @@ export function clampRect(r: Rect, collapsed: boolean): Rect {
 
 export function defaultFloatRect(width: number): Rect {
   const s = screenRem();
-  return clampRect({ x: DOCK_SIDE, y: DOCK_TOP, w: width, h: Math.min(FLOAT_DEFAULT_HEIGHT, s.h - s.bottom - DOCK_TOP) }, false);
+  const top = dockTop();
+  return clampRect({ x: DOCK_SIDE, y: top, w: width, h: Math.min(FLOAT_DEFAULT_HEIGHT, s.h - s.bottom - top) }, false);
 }
 
 // Tile size from the measured grid width and the column count C# derived from it.
